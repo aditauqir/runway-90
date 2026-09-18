@@ -13,9 +13,8 @@
 
 **A private, persistent financial-recovery companion for women rebuilding after economic abuse.**
 
-*HackHers @ GSU · Track: FinanceHER — Building Financial Independence*  
 *Target: iOS 18.0+ (SwiftUI · Liquid Glass Design)*  
-*Key Integrations: Google Gemini · Backboard · Tiger Data · Auth0 by Okta*
+*Platform: iPhone (Physical & Virtual iOS Simulator)*
 
 [![iOS 18.0+](https://img.shields.io/badge/iOS-18.0%2B-blue.svg?logo=apple&style=flat-square)](https://developer.apple.com/ios/)
 [![Swift 5.10](https://img.shields.io/badge/Swift-5.10-orange.svg?logo=swift&style=flat-square)](https://swift.org)
@@ -28,31 +27,28 @@
 
 ---
 
+> ℹ️ **Team & Collaborator Note:** Detailed hackathon track targets, sponsor prize rubrics, presentation scripts, and backend wire contracts are documented separately in [**`README_TEAM.md`**](README_TEAM.md).
+
+---
+
 ## Table of Contents
 
 - [The Problem](#the-problem)
 - [What Runway 90 Does](#what-runway-90-does)
-- [The 5-Beat Demo Loop](#the-5-beat-demo-loop)
-- [Sponsor Architecture & Technical Reference](#sponsor-architecture--technical-reference)
-  - [UML Sequence: Auth0-Scoped Tiger Restore](#uml-sequence-auth0-scoped-tiger-restore)
-  - [Google Gemini API (Vision & Structured Extraction)](#1-google-gemini-api-vision--structured-extraction)
-  - [Backboard (Cross-Session Persistent Memory)](#2-backboard-cross-session-persistent-memory)
-  - [Tiger Data / Timescale Cloud (Event-Sourced Runway)](#3-tiger-data--timescale-cloud-event-sourced-runway)
-  - [Auth0 by Okta (Role Separation & Scoped Access)](#4-auth0-by-okta-role-separation--scoped-access)
-  - [Deliberate Exclusions](#deliberate-exclusions-demonstrating-product-judgment)
+- [The 5-Beat Recovery Loop](#the-5-beat-recovery-loop)
 - [Safety & Trauma-Informed Principles](#safety--trauma-informed-principles)
 - [Design System — Liquid Glass](#design-system--liquid-glass)
-- [Getting Started: Build & Run on Any Device](#getting-started-build--run-on-any-device)
+- [Virtual Demo: Testing on Mac via Xcode Simulator](#virtual-demo-testing-on-mac-via-xcode-simulator)
   - [Prerequisites](#prerequisites)
-  - [1. Clone Repository & Install XcodeGen](#1-clone-repository--install-xcodegen)
-  - [2. Generate Xcode Project](#2-generate-xcode-project)
-  - [3. Configuration & Secrets (Optional)](#3-configuration--secrets-optional)
-  - [4. Build & Run in Xcode GUI](#4-build--run-in-xcode-gui)
-  - [5. CLI Build Commands](#5-cli-build-commands)
-  - [6. Troubleshooting & Gotchas](#6-troubleshooting--gotchas)
+  - [Step 1: Download iOS Simulator Runtime](#step-1-download-ios-simulator-runtime)
+  - [Step 2: Generate Project & Open in Xcode](#step-2-generate-project--open-in-xcode)
+  - [Step 3: Select Virtual Simulator & Run](#step-3-select-virtual-simulator--run)
+  - [Step 4: Step-by-Step Virtual Walkthrough](#step-4-step-by-step-virtual-walkthrough)
+  - [Simulator Shortcuts & Safety Testing](#simulator-shortcuts--safety-testing)
+- [Technical Architecture](#technical-architecture)
+  - [Application Architecture](#application-architecture)
+  - [Data Flow & Persistence](#data-flow--persistence)
 - [Repository Structure](#repository-structure)
-- [Data Model & Database Schema](#data-model--database-schema)
-- [Demo Script & Pitch](#demo-script--pitch)
 - [Sources & References](#sources--references)
 
 ---
@@ -61,11 +57,11 @@
 
 Financial abuse is present in **~99% of domestic violence cases** ([NNEDV](https://nnedv.org/content/about-financial-abuse/)). It is the single most cited reason survivors stay in or return to unsafe environments. An abuser frequently controls bank access, forces debt into the partner's name, ruins credit, conceals obligations, and confiscates income.
 
-When a woman finally leaves, she faces systemic barriers:
+When a woman finally leaves, she faces severe systemic barriers:
 - **Zero accessible liquidity:** Accounts are drained, monitored, or locked.
 - **Coerced, invisible debt:** Collections letters arrive for credit lines, loans, and bills she never opened or knew existed.
-- **Wrecked credit:** Poor credit scores prevent securing an apartment lease, opening a phone plan, financing reliable transport, or passing employment checks.
-- **A mountain of bewildering paperwork:** Creditor notices, bureau reports, and legal notices that must be untangled under severe cognitive and emotional stress.
+- **Wrecked credit:** Damaged credit history blocks apartment leases, phone plans, reliable transportation, and employment background checks.
+- **A mountain of bewildering paperwork:** Creditor notices, bureau reports, and legal notices that must be untangled under extreme emotional and cognitive strain.
 - **Trauma-compounding story repetition:** Having to retell her personal and financial trauma from scratch to every single shelter, intake worker, caseworker, and credit bureau.
 
 ### Why Existing Fintech Fails Survivors
@@ -90,36 +86,36 @@ Runway 90 guides a survivor across her first 90 days of recovery with a trauma-i
    or statement         or Not sure.         costs covered        clear reason         Zero retelling
 ```
 
-1. **Multimodal Document Ingestion:** Uses Google Gemini vision to extract counterparties, account numbers, balances, and opening dates into structured cards.
+1. **Multimodal Document Ingestion:** Analyzes collection letters and statements to extract counterparties, account numbers, balances, and opening dates into structured cards.
 2. **Survivor-Controlled Truth:** Nothing enters the confirmed case record without survivor verification. The app **never** labels an account as "fraud" — only *unrecognised*, *inconsistent*, or *requires review*.
 3. **Continuous Runway Metric:** Displays financial runway in days (e.g., *"18 days of essential expenses covered"*), powered by an event-backed time-series model.
 4. **Single Next Action:** Eliminates decision fatigue by suggesting exactly **one** actionable next step with clear rationale, avoiding competing priorities.
-5. **Persistent Cross-Session Memory:** Remembers confirmed facts, bureaus frozen, active deadlines, and preferences via Backboard. Survivors never have to re-explain their situation.
-6. **Scoped Advocate Handoff:** Generates a neutral, aggregate summary that can be shared with an advocate through Auth0 role separation. Private notes, unconfirmed facts, and original documents remain completely private.
+5. **Persistent Cross-Session Memory:** Remembers confirmed facts, bureaus frozen, active deadlines, and preferences. Survivors never have to re-explain their situation.
+6. **Scoped Advocate Handoff:** Generates a neutral, aggregate summary that can be shared with an advocate. Private notes, unconfirmed facts, and original documents remain completely private.
 
 ---
 
-## The 5-Beat Demo Loop
+## The 5-Beat Recovery Loop
 
-Runway 90 is engineered to prove its end-to-end loop in a crisp, 3-minute demo using pre-seeded fixture data for **Maya** (Day 6 of recovery, 18-day runway, Experian frozen, TransUnion pending).
+Runway 90 proves its core loop through a pre-seeded synthetic recovery profile for **Maya** (Day 6 of recovery, 18-day runway, Experian frozen, TransUnion pending):
 
 ```
  ┌─────────────────────────────────────────────────────────────────────────────┐
- │                         THE 3-MINUTE DEMO WORKFLOW                          │
+ │                         THE 5-BEAT DEMO WORKFLOW                            │
  └─────────────────────────────────────────────────────────────────────────────┘
 
- Beat 1: Reopen Maya's Case
- ─────────────────────────
+ Beat 1: Reopen Maya's Case (Persistent Case Memory)
+ ───────────────────────────────────────────────────
  • Opens directly into Maya's active recovery session.
- • Home card displays a personalized memory message synthesized from persisted
-   MemoryEntry records (via Backboard):
+ • Home card displays a personalized memory greeting synthesized from stored
+   memory entries:
    "Welcome back, Maya. You froze Experian and confirmed two accounts.
     TransUnion is still open. Want to review the letter you mentioned?"
 
- Beat 2: Ingest Document via Gemini Vision
- ─────────────────────────────────────────
- • Tap "Review letter" -> Select bundled synthetic collection letter (or camera).
- • Gemini 3.6 Flash analyzes the image and extracts structured metadata:
+ Beat 2: Ingest Document via Vision Analysis
+ ───────────────────────────────────────────
+ • Tap "Review letter" -> Select the bundled synthetic collection letter.
+ • Vision engine extracts structured metadata:
    - Counterparty: Northstar Collections
    - Account Last 4: 4471
    - Amount: $2,310
@@ -134,8 +130,8 @@ Runway 90 is engineered to prove its end-to-end loop in a crisp, 3-minute demo u
    and queues for the neutral advocate summary.
  • Hard Rule: Zero data enters confirmed records without survivor verification.
 
- Beat 4: Tiger Data Runway & Single Next Action
- ──────────────────────────────────────────────
+ Beat 4: Dynamic Runway & Single Next Action
+ ───────────────────────────────────────────
  • Runway screen displays 18 days of essential expenses covered.
  • Apple Charts visualizes the historical runway time-series.
  • Highlights largest remaining gaps: Transportation & Housing deposit.
@@ -144,7 +140,7 @@ Runway 90 is engineered to prove its end-to-end loop in a crisp, 3-minute demo u
 
  Beat 5: Scoped Advocate Handoff & Quick Exit Close
  ──────────────────────────────────────────────────
- • Switch to Advocate Role (Auth0 Universal Login / Demo MFA gate).
+ • Switch to Advocate Role (authenticated or demo advocate access).
  • Advocate dashboard displays strictly scoped summary:
    - Case Day: 6
    - Confirmed Facts: 3
@@ -160,167 +156,9 @@ Runway 90 is engineered to prove its end-to-end loop in a crisp, 3-minute demo u
 
 ---
 
-## Sponsor Architecture & Technical Reference
-
-Runway 90 integrates four sponsors where each serves a load-bearing architectural role. If any sponsor is removed, the product loop breaks.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       RUNWAY 90 ARCHITECTURE                                    │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-                                                  │
-                 ┌────────────────────────────────┼────────────────────────────────┐
-                 │                                │                                │
-                 ▼                                ▼                                ▼
-       ┌───────────────────┐            ┌───────────────────┐            ┌───────────────────┐
-       │   Google Gemini   │            │     Backboard     │            │    Tiger Data     │
-       │   (Vision AI)     │            │  (Case Memory)    │            │ (Event Sourcing)  │
-       └───────────────────┘            └───────────────────┘            └───────────────────┘
-                 │                                │                                │
-        Multimodal extraction           Long-term state recall           Authenticated API proxy
-        gemini-3.6-flash                app.backboard.io/api             Vercel → Tiger Cloud
-        Strict JSON schema              One assistant per subject        Auth0 sub-scoped
-        Zero-markdown contract          Thread messages with             snapshot + events
-                                        memory: "auto"
-                 │                                │                                │
-                 └────────────────────────────────┼────────────────────────────────┘
-                                                  │
-                                                  ▼
-                                        ┌───────────────────┐
-                                        │  Auth0 by Okta    │
-                                        │  (Identity & RBAC)│
-                                        └───────────────────┘
-                                                  │
-                                         Universal Login PKCE
-                                         Custom URL scheme callback
-                                         Roles claim: survivor vs advocate
-                                        Scoped, revocable data isolation
-```
-
-### UML Sequence: Auth0-Scoped Tiger Restore
-
-This sequence shows the live persistence path used after a survivor signs in on
-a new device. The demo login uses a stable synthetic subject; live Auth0 uses
-the token's `sub` claim as the Tiger snapshot owner key.
-
-```mermaid
-sequenceDiagram
-    actor Survivor
-    participant Auth0
-    participant App as Runway 90 AppStore
-    participant API as Runway 90 API
-    participant Tiger as Tiger Cloud
-    participant Gemini
-    actor Advocate
-
-    Survivor->>Auth0: Universal Login (PKCE)
-    Auth0-->>App: ID token + API access token
-    App->>API: GET /api/case (Bearer token)
-    API->>Auth0: Verify issuer, audience, signature
-    API->>Tiger: SELECT case_snapshots WHERE owner_id = verified sub
-    Tiger-->>App: CaseState JSONB (or no snapshot)
-    App->>App: Restore local case or seed synthetic fixture
-
-    Survivor->>App: Review synthetic letter
-    App->>API: POST /api/extract (Bearer token + image)
-    API->>Gemini: Extract structured facts with server key
-    Gemini-->>App: Unconfirmed facts JSON
-    Survivor->>App: Mine / Not mine / Not sure
-    App->>API: POST /api/events + PUT /api/case
-    API->>Tiger: INSERT event + UPSERT owner-scoped snapshot
-
-    Survivor->>App: Share neutral summary
-    App->>API: INSERT summary_shared event
-    Advocate->>Auth0: Sign in as advocate
-    Auth0-->>App: Advocate role + MFA verified
-    App-->>Advocate: Shared summary only
-    Advocate->>App: Approve transportation request
-    App->>Tiger: INSERT approval + runway_recalculated events
-    App->>Tiger: UPSERT updated CaseState snapshot
-```
-
-### 1. Google Gemini API (Vision & Structured Extraction)
-- **Role:** Extracts accounts, balances, dates, and counterparties from camera photos or photo library documents.
-- **Model:** `gemini-3.6-flash` via the authenticated backend proxy:
-  ```http
-  POST /api/extract
-  ```
-- **Contract:** Uses `generationConfig.response_mime_type: "application/json"` to enforce raw JSON parsing without markdown fences (` ```json `):
-  ```json
-  {
-    "documentType": "collection_letter",
-    "facts": [
-      {
-        "counterparty": "Northstar Collections",
-        "accountLast4": "4471",
-        "amount": 2310,
-        "openedDate": "2024-03",
-        "reviewStatus": "unconfirmed"
-      }
-    ]
-  }
-  ```
-- **Fallback:** Bundled `Fixture.extractionFixture` returning identical JSON structure, visibly tagged with a `Demo extraction` badge in the UI.
-
-### 2. Backboard (Cross-Session Persistent Memory)
-- **Role:** Overcomes LLM statelessness by maintaining long-term case memory, past actions, frozen bureaus, and survivor preferences.
-- **Endpoint:** iOS calls authenticated `POST /api/memory`; only the backend
-  calls `https://app.backboard.io/api` with `X-API-Key: {BACKBOARD_API_KEY}`.
-- **Implementation:**
-  - Creates/reuses one assistant per case (`POST /assistants` with name `runway90-{caseId}`).
-  - Emits memory snapshots via `POST /threads/messages` with `"memory": "auto"`.
-  - Recalls cross-thread memories (`retrieved_memories: true`).
-- **Memory Assembly:** The home greeting is generated at runtime from `MemoryEntry` key-value pairs (`experian_status`, `last_action`, `pending_task`, `mentioned_letter`), rather than static strings.
-- **Fallback:** Local atomic JSON persistence (`Documents/runway90_case_state.json`) with a `Demo memory fallback` badge.
-
-### 3. Tiger Data / Timescale Cloud (Event-Sourced Runway)
-- **Role:** Financial runway is a continuous time-series aggregate, not a static number. Every confirmed fact, expense, and request is an immutable event, while the latest synthetic `CaseState` is stored as a recoverable JSONB snapshot.
-- **Service Details:** Tiger Cloud service `db-90`, database `tsdb`.
-- **Access path:** iOS sends an Auth0 bearer token to the backend. The backend
-  verifies issuer, audience, and signature, then uses the verified `sub` for
-  every Tiger query. `TIGER_DATA_URL` never enters the iOS bundle.
-- **Database Hypertable Schema:**
-  ```sql
-  CREATE TABLE events (
-    id text NOT NULL,
-    case_id text NOT NULL,
-    type text NOT NULL,
-    timestamp timestamptz NOT NULL,
-    payload jsonb
-  );
-  SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
-  ```
-- **Event Types Emitted:** `fact_confirmed`, `account_marked_not_mine`, `fact_needs_review`, `assistance_request_created`, `assistance_request_approved`, `runway_recalculated`, `summary_shared`.
-- **Recovery Snapshot:** `case_snapshots` is keyed by `owner_id`; live Auth0
-  sessions use the verified access-token `sub`. A fresh install can load the
-  snapshot after login. Demo roles remain intentionally local.
-- **Fallback:** Local event log in `CaseState.timeline` with `Demo data source` badge.
-
-### 4. Auth0 by Okta (Role Separation & Scoped Access)
-- **Role:** Enforces strict role-based access control between the **Survivor** and the **Advocate**.
-- **SDK:** `Auth0.swift` (v2.22+) using PKCE authorization code grant over custom URL scheme (`com.hackhers.runway90`).
-- **Role Mapping:** Inspects custom JWT claim `https://runway90.app/roles`:
-  - `roles.contains("advocate")` -> `.advocate` (Advocate Dashboard).
-  - Otherwise -> `.survivor` (Survivor Reclaim Workspace).
-- **Data Scoping:** The advocate view can **only** query explicitly shared aggregate summaries (`summaryShared == true`). Advocates have zero access to document photos, raw timelines, or unconfirmed facts.
-- **Tiger Link:** Auth0's stable `sub` claim scopes each survivor's Tiger snapshot; the app never uses an email address as the database owner key.
-- **API audience:** `Auth0.plist` contains the public API audience and backend
-  URL. The access token is sent to the backend; database/provider credentials
-  are server-side Vercel environment variables only.
-- **MFA Enforcement:** Tenant-enforced multi-factor authentication for advocates. Live Auth0 sessions skip in-app MFA; demo mode provides a 6-digit simulation sheet.
-- **Fallback:** Labelled `Demo login` local role toggle.
-
-### Deliberate Exclusions (Demonstrating Product Judgment)
-Judges appreciate teams that know what **not** to build:
-- **No Cryptocurrency / On-Chain Vouchers (e.g., Solana):** Money movement does not solve coerced debt disputes and adds unnecessary complexity.
-- **No Audio/Voice Synthesis (e.g., ElevenLabs):** Audio playing aloud in a cohabitated, unsafe home is a severe physical hazard.
-- **No Emotion Detection (e.g., Presage):** Subjecting a trauma survivor to webcam emotional analysis is invasive and ethically fraught.
-
----
-
 ## Safety & Trauma-Informed Principles
 
-Runway 90 was architected around the reality that a survivor's phone may be monitored by an abuser:
+Runway 90 is designed for a phone that may be monitored by an abuser:
 
 | Safety Feature | Implementation | Behavior |
 |---|---|---|
@@ -331,7 +169,7 @@ Runway 90 was architected around the reality that a survivor's phone may be moni
 | **Decoy Return PIN** | Secure PIN entry | Enter `0000` to return to Runway 90. |
 | **Duress PIN Placeholder**| Any other 4-digit code | Empties the decoy state without displaying error messages. |
 | **Neutral Notifications**| System copy | Alerts read: *"You have a reminder"* — never exposing financial or domestic terms. |
-| **Complete Data Erasure**| "Delete demo case" action | Atomically removes local JSON, clears session, and reseeds clean state. |
+| **Complete Data Erasure**| "Delete demo case" action | Atomically removes local state, clears session, and reseeds clean baseline. |
 | **Zero Real Data** | Synthetic-only policy | All names, balances, and accounts are fictional. Disclaimer banner on all screens. |
 
 ---
@@ -352,171 +190,142 @@ Built with Apple's **Liquid Glass** aesthetic, combining blurred depth materials
 
 </div>
 
-- **Adaptive Glass Material:** Implements native iOS 26+ `.glassEffect()` modifiers with graceful fallback to `.ultraThinMaterial` on iOS 18.0+.
+- **Custom Iridescent Art Background:** The login screen renders a full-bleed art background with a subtle ambient gradient scrim for high contrast.
+- **Floating Apple Flight Icon:** Centered Liquid Glass badge featuring Apple's flight icon (`airplane.departure`) placed 30px above the screen midpoint.
+- **Adaptive Glass Material:** Implements native iOS 26+ `.glassEffect()` modifiers with graceful fallback to multi-layered `.ultraThinMaterial` on iOS 18.0+.
 - **Dynamic Numeric Transitions:** Runway numbers animate smoothly using `.contentTransition(.numericText())` when approval shifts runway from 18 to 31 days.
 - **Decoy Contrast:** Decoy screen deliberately abandons dark glass styling in favor of stark system light backgrounds to look entirely unbranded.
 
 ---
 
-## Getting Started: Build & Run on Any Device
+## Virtual Demo: Testing on Mac via Xcode Simulator
 
-Follow these instructions to clone, configure, build, and run Runway 90 on a Mac running Xcode.
+You can test Runway 90 virtually on macOS using Apple's **iOS Simulator**. The app runs with zero external configuration using built-in synthetic demo fallbacks.
 
 ### Prerequisites
-- **macOS:** macOS Sonoma (14.0+) or Sequoia (15.0+)
+- **Mac:** macOS Sonoma (14.0+) or Sequoia (15.0+)
 - **Xcode:** Xcode 16.0+ (Xcode 27 recommended, Swift 5.10)
-- **XcodeGen:** Utility to generate the `.xcodeproj` from declarative `project.yml`:
-  ```sh
+- **XcodeGen:** Install via Homebrew:
+  ```bash
   brew install xcodegen
   ```
-- **Optional Tools:**
-  - `libpq` for direct database inspection via `psql`: `brew install libpq`
-  - iOS physical device or Simulator with iOS 18.0+ runtime installed.
 
 ---
 
-### 1. Clone Repository & Install XcodeGen
+### Step 1: Download iOS Simulator Runtime
 
-```sh
-# Clone repository
-git clone https://github.com/aditauqir/runway90.git
-cd runway90
+If this is your first time developing on Xcode, ensure an iOS Simulator runtime is installed:
+1. Open **Xcode**.
+2. Go to **Xcode ▸ Settings…** (`⌘ ,`).
+3. Select the **Platforms** (or **Components**) tab.
+4. Under **iOS**, click **Get** or **Download** next to the latest iOS Runtime.
 
-# Ensure xcodegen is installed
-brew install xcodegen
+*Or run from Terminal:*
+```bash
+xcodebuild -downloadPlatform iOS
 ```
-
-### 2. Generate Xcode Project
-
-Runway 90 uses `project.yml` as its source of truth to avoid merge conflicts in `.pbxproj` files:
-
-```sh
-xcodegen generate
-```
-*This produces a clean, configured `Runway90.xcodeproj` linked with the `Auth0.swift` package. Tiger Data, Gemini, and Backboard are reached through the authenticated hosted backend in `api/`.*
 
 ---
 
-### 3. Configuration & Secrets
+### Step 2: Generate Project & Open in Xcode
 
-The app is **100% functional out of the box** without any API keys. When keys are absent, all adapters smoothly run labelled demo fallbacks:
-- Gemini -> *"Demo extraction"*
-- Backboard -> *"Demo memory fallback"*
-- Tiger Data -> *"Demo data source"*
-- Auth0 -> *"Demo login"* / *"Demo approval"*
+From the repository root:
 
-The iOS app must not contain Tiger, Gemini, or Backboard credentials. For a
-demo-only build, leave the backend URL as its placeholder and the app uses the
-labeled fallbacks. For a shared live build, deploy the API and configure its
-server-side environment variables:
-
-```sh
-npm install
-vercel deploy
-```
-
-Set the variables from `.env.example` in Vercel:
-
-```env
-AUTH0_DOMAIN=skmpe.us.auth0.com
-AUTH0_AUDIENCE=https://your-runway90-api-identifier
-TIGER_DATA_URL=postgres://user:password@host:port/tsdb?sslmode=require
-GEMINI_API_KEY=stored-only-in-Vercel
-BACKBOARD_API_KEY=stored-only-in-Vercel
-GEMINI_MODEL=gemini-3.6-flash
-BACKBOARD_BASE_URL=https://app.backboard.io/api
-```
-
-Then replace the public `Audience` and `BackendURL` placeholders in
-`Runway90/Resources/Auth0.plist`, regenerate Xcode, and rebuild the app. The
-Auth0 user’s verified `sub` becomes the Tiger `case_snapshots.owner_id`, so a
-new phone restores that user’s own case after login.
-
-#### Auth0 backend setup
-
-In the Auth0 dashboard, create an API whose Identifier exactly matches
-`Auth0.plist` → `Audience`. Enable the native client for that API, keep the
-custom URL callback `com.hackhers.runway90://…`, and keep the existing roles
-Action so the ID token carries `https://runway90.app/roles`. The backend checks
-the API access token’s issuer, audience, signature, and `sub` before touching
-Tiger Data. Give teammates separate Auth0 users; never share one user’s token.
-
-After deploying Vercel, set `BackendURL` to the deployed URL ending in `/api`,
-run `xcodegen generate`, and rebuild the IPA. Check
-`https://your-backend.vercel.app/api/health` before uploading.
-
-#### TestFlight sharing
-
-1. In App Store Connect, create an iOS app with bundle ID
-   `com.hackhers.runway90` if it does not already exist.
-2. In Xcode, choose **Any iOS Device (arm64)**, then **Product → Archive**.
-3. In Organizer, select the archive → **Distribute App → App Store Connect →
-   Upload**.
-4. Wait for Apple to process the build. Add teammates under **TestFlight →
-   Internal Testing** if they are App Store Connect users, or **External
-   Testing** if they are not. External testing may require Apple beta review.
-5. Teammates accept the TestFlight invitation, install TestFlight, and open the
-   app. Each person signs into their own Auth0 account; their case is stored
-   under their own Auth0 `sub` in Tiger Data.
-
-Do not upload an archive made while `Secrets.plist` is included in the app
-bundle. The XcodeGen source now explicitly excludes it; verify the archive
-contains no `Secrets.plist` before sharing.
-
----
-
-### 4. Build & Run in Xcode GUI
-
-1. Open the generated project in Xcode:
-   ```sh
-   open Runway90.xcodeproj
-   ```
-2. **Configure Code Signing:**
-   - In Xcode's project navigator, select **Runway90** at the top.
-   - Select the **Runway90** target -> **Signing & Capabilities** tab.
-   - Under **Signing**, select your personal or organization Apple Team from the **Team** dropdown.
-   - Set **Bundle Identifier** to `com.hackhers.runway90` (or a unique suffix if using a free personal team).
-3. **Select Run Destination:**
-   - In the top toolbar, select an iOS Simulator (e.g., **iPhone 16 Pro**) or your connected physical iPhone.
-4. **Build & Run:**
-   - Press **⌘R** or click the **Play** button.
-
----
-
-### 5. CLI Build Commands
-
-To verify compilation and linking directly from the terminal:
-
-```sh
-# Regenerate project file
+```bash
+# Generate the Xcode project from declarative spec
 xcodegen generate
 
-# Build for generic iOS Simulator destination (skips code signing requirement)
-xcodebuild -project Runway90.xcodeproj -scheme Runway90 \
-  -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+# Open the project in Xcode
+open Runway90.xcodeproj
 ```
 
 ---
 
-### 6. Troubleshooting & Gotchas
+### Step 3: Select Virtual Simulator & Run
 
-- **"No simulator runtime installed":**
-  If `xcodebuild` or Xcode reports missing runtimes, open Xcode -> **Settings** -> **Components** -> Download the latest **iOS Runtime** (iOS 18+).
-- **Inspecting Live Tiger Data Events:**
-  If you have configured `TIGER_DATA_URL`, view live event ingestion from terminal:
-  ```sh
-    /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
-      -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"
-  ```
-- **Inspecting Tiger snapshots:**
-  ```sh
-  /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
-    -c "SELECT owner_id, case_id, updated_at FROM case_snapshots ORDER BY updated_at DESC;"
-  ```
-- **Quick Exit in Simulator:**
-  Trigger shake gesture in Simulator via **Device ▸ Shake** or tap the **Exit Shield Button** in the navigation bar.
-- **Decoy Unlock PIN:**
-  The PIN to exit the weather decoy screen is `0000`.
+1. In Xcode's top toolbar, click the device destination dropdown next to **Runway90**.
+2. Under **iOS Simulators**, choose any virtual device (e.g., **iPhone 16 Pro** or **iPhone 15**).
+3. If signing is requested under **Signing & Capabilities**, select your personal Apple ID team (no paid developer membership required for simulator testing).
+4. Press **`⌘ R`** (or click the ▶ **Play** button).
+
+The iOS Simulator will boot and launch directly into the **Liquid Glass** login screen!
+
+---
+
+### Step 4: Step-by-Step Virtual Walkthrough
+
+1. **Login Screen:**
+   - Notice the iridescent background, the Apple flight icon centered above the mid-line, and the frosted glass buttons pinned to the bottom.
+   - Tap **"Welcome back, Maya"** to enter the survivor's active recovery session.
+2. **Survivor Home (Beat 1):**
+   - See Maya's Day 6 dashboard with the personalized memory message dynamically generated from stored recovery history.
+   - Tap **"Review letter"**.
+3. **Document Ingestion (Beat 2):**
+   - Tap **"Use the demo letter"** (this uses the built-in synthetic Northstar Collections fixture).
+   - Watch the extraction state parse the document into structured fact cards.
+4. **Survivor Confirmation (Beat 3):**
+   - On the extracted account card, tap **"Not mine"**.
+   - The unrecognised debt routes immediately to the **Reclaim** tab and case timeline.
+5. **Runway & Next Action (Beat 4):**
+   - Navigate to the **Runway** tab. Notice the **18 days** counter and the line chart.
+   - View the single next action: *"Request transportation support ($250)"*.
+   - Tap **"Share neutral summary"**.
+6. **Advocate Approval & Recalculation (Beat 5):**
+   - Tap **"Switch to advocate view"** (or return to login and tap *"I’m a demo advocate"*).
+   - Enter any 6 digits for the demo MFA gate (`123456`).
+   - Notice the advocate sees ONLY the shared neutral summary (no private notes or documents).
+   - Tap **"Approve (Demo approval)"**.
+   - Tap **"Back to Maya"** and return to the **Runway** tab: watch the runway number smoothly animate from **18 days → 31 days**!
+
+---
+
+### Simulator Shortcuts & Safety Testing
+
+- **Trigger Quick Exit (Shake):**
+  In the macOS Simulator menu, click **Device ▸ Shake** (or press **`⌃ ⌘ Z`**).
+  *Result:* The entire interface instantly flips to the Weather Decoy Screen (`Partly cloudy · 68°`).
+- **Toolbar Quick Exit:**
+  Tap the **Shield icon** in the top-right corner of any screen.
+- **Unlock Decoy Screen:**
+  Tap **Settings** at the bottom of the decoy screen and enter PIN **`0000`** to return to the app.
+- **Duress PIN Test:**
+  Enter any other 4 digits (e.g., `1234`) on the decoy screen — the app safely resets to an empty state without revealing case data.
+- **Wipe Demo Data:**
+  Go to the **Reclaim** tab ▸ scroll down ▸ tap **"Delete demo case"** to erase all local data and reset to Day 6 baseline.
+
+---
+
+## Technical Architecture
+
+### Application Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Runway90App (@main)                                         │
+│   └─ RootView — switch store.route                          │
+│        disclosure → DisclosureView (Safety warnings)        │
+│        roleEntry  → RoleEntryView (Liquid Glass login)      │
+│        survivor   → SurvivorRootView (Home/Reclaim/Runway)  │
+│        advocate   → AdvocateView (Scoped summary & approval)│
+│        decoy      → DecoyView (Quick-exit weather decoy)    │
+└──────────────┬──────────────────────────────────────────────┘
+               │ @EnvironmentObject
+┌──────────────▼──────────────────────────────────────────────┐
+│ AppStore (@MainActor ObservableObject)                      │
+│   Manages case state, timeline events, runway calculation,  │
+│   memory entries, and scoped sharing permissions            │
+└───┬──────────────┬───────────────┬──────────────┬───────────┘
+    │              │               │              │
+┌───▼────┐  ┌──────▼─────┐  ┌──────▼─────┐  ┌────▼─────┐
+│ Gemini │  │ Backboard  │  │ TigerData  │  │  Auth    │
+│Adapter │  │  Adapter   │  │  Adapter   │  │ Adapter  │
+└────────┘  └────────────┘  └────────────┘  └──────────┘
+```
+
+### Data Flow & Persistence
+- **Local Source of Truth:** `CaseState` persists locally in `Documents/runway90_case_state.json` via atomic file operations.
+- **Live Cloud Backend:** Optional authenticated backend proxy (`api/[...path].js`) handles remote memory sync, event logging, and vision extraction when configured.
+- **Graceful Fallbacks:** Every adapter includes a transparent demo fallback (`Demo extraction`, `Demo memory fallback`, `Demo data source`, `Demo login`, `Demo approval`). Missing credentials never block the app.
 
 ---
 
@@ -526,102 +335,44 @@ xcodebuild -project Runway90.xcodeproj -scheme Runway90 \
 runway90/
 ├── project.yml                       # XcodeGen project specification
 ├── Runway90.xcodeproj                # Generated Xcode project
-├── AGENTS.md                         # Agent handoff notes & verification status
+├── README.md                         # Public product & virtual demo testing guide
+├── README_TEAM.md                    # Internal team brief (tracks, sponsors, script)
+├── AGENTS.md                         # Agent handoff notes & technical status
+├── api/
+│   └── [...path].js                  # Vercel serverless proxy backend
 ├── docs/
-│   ├── Runway90_Product_Spec_Packet.md  # Official product spec & demo beats
+│   ├── Runway90_Product_Spec_Packet.md  # Official product spec
 │   └── TECH_STACK.md                 # Deep technical architecture reference
 └── Runway90/
     ├── App/
     │   └── Runway90App.swift         # @main App, root routing, shake detection
     ├── Theme/
-    │   └── Theme.swift               # Palette & Liquid Glass view modifiers
+    │   └── Theme.swift               # Palette & Liquid Glass modifiers
     ├── Models/
-    │   └── Models.swift              # Spec §5 data models, Maya fixture, Gemini JSON contract
+    │   └── Models.swift              # Data models, Maya fixture, extraction schema
     ├── Store/
-    │   └── AppStore.swift            # Central @MainActor state store & business logic
+    │   └── AppStore.swift            # Central @MainActor state store & actions
     ├── Adapters/
-    │   ├── BackendAPI.swift           # Authenticated hosted API client
-    │   ├── Secrets.swift              # Legacy local template reader, never bundled
-    │   ├── GeminiAdapter.swift       # Gemini 3.6 Flash vision extraction adapter
-    │   ├── BackboardAdapter.swift    # Backboard assistant memory & local JSON sync
-    │   ├── TigerDataAdapter.swift    # Authenticated backend facade for Tiger Data
-    │   └── AuthAdapter.swift         # Auth0 Universal Login & demo role switcher
+    │   ├── BackendAPI.swift          # Authenticated API client
+    │   ├── GeminiAdapter.swift       # Vision extraction adapter
+    │   ├── BackboardAdapter.swift    # Case memory adapter
+    │   ├── TigerDataAdapter.swift   # Financial event-sourcing adapter
+    │   └── AuthAdapter.swift         # Auth0 login & role switcher
     ├── Views/
-    │   ├── DisclosureView.swift      # Synthetic data warning & disclosure screen
-    │   ├── RoleEntryView.swift       # Role selector: Maya (Survivor) or Demo Advocate
-    │   ├── SurvivorHomeView.swift    # Home dashboard, Backboard greeting, runway summary
-    │   ├── CaptureView.swift         # Document capture, Gemini extraction, confirmation cards
-    │   ├── SyntheticLetterView.swift # Native in-app rendered fictional collection letter
-    │   ├── ReclaimView.swift         # Confirmed facts, unrecognised accounts, timeline
-    │   ├── RunwayView.swift          # Big runway counter, Charts history, single next action
-    │   ├── AdvocateView.swift        # Scoped summary view, demo MFA gate, request approval
-    │   └── DecoyView.swift           # Neutral weather decoy screen (PIN 0000 escape)
+    │   ├── DisclosureView.swift      # Synthetic data disclosure
+    │   ├── RoleEntryView.swift       # Redesigned Liquid Glass login screen
+    │   ├── SurvivorHomeView.swift    # Maya's Day 6 dashboard
+    │   ├── CaptureView.swift         # Document review & fact confirmation
+    │   ├── SyntheticLetterView.swift # Native in-app synthetic collection letter
+    │   ├── ReclaimView.swift         # Confirmed debt, unrecognised debt, timeline
+    │   ├── RunwayView.swift          # Runway days counter, charts, next action
+    │   ├── AdvocateView.swift        # Scoped advocate summary & approval
+    │   └── DecoyView.swift           # Neutral weather decoy screen
     └── Resources/
-        ├── Auth0.plist               # Public client ID & domain for Auth0.swift
-        └── Secrets.example.plist     # Template for private API credentials
+        ├── Assets.xcassets/          # Art assets & app icons
+        ├── Auth0.plist               # Public client ID & domain
+        └── Secrets.example.plist     # Template for optional private API credentials
 ```
-
----
-
-## Data Model & Database Schema
-
-### Core Swift Models (`Models.swift`)
-- **`User`:** Identity, display name, role (`.survivor` | `.advocate`), safety preferences.
-- **`CaseRecord`:** Active recovery day number, runway days, confirmed fact references, pending task.
-- **`DocumentRecord`:** Ingested document metadata, type, extraction status.
-- **`FinancialFact`:** Extracted financial item, counterparty, last 4 digits, balance, opening date, `reviewStatus` (`.mine`, `.notMine`, `.notSure`, `.unconfirmed`).
-- **`AssistanceRequest`:** Mutual aid / support request ($250 transportation), status (`.pending` | `.approved`).
-- **`MemoryEntry`:** Key-value long-term memory records (`experian_status`, `pending_task`, `last_action`, `mentioned_letter`).
-- **`RunwaySnapshot`:** Point-in-time runway calculation for time-series charts.
-
-### Tiger Data (Timescale Cloud) Hypertable Schema
-```sql
--- Timescale Cloud Hypertable for Case Events
-CREATE TABLE events (
-  id text NOT NULL,
-  case_id text NOT NULL,
-  type text NOT NULL,
-  timestamp timestamptz NOT NULL,
-  payload jsonb
-);
-
--- Convert to Timescale continuous hypertable partitioned on timestamp
-SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
-
--- Latest recoverable synthetic case state, scoped by Auth0 `sub`
-CREATE TABLE IF NOT EXISTS case_snapshots (
-  owner_id text PRIMARY KEY,
-  case_id text NOT NULL,
-  updated_at timestamptz NOT NULL,
-  payload jsonb NOT NULL
-);
-```
-
----
-
-## Demo Script & Pitch
-
-### 30-Second Elevator Pitch
-> *"Financial abuse is present in 99% of domestic violence cases. Women leave with nothing — with debt they didn't open, credit that's been wrecked, and a pile of paperwork they have to decode alone. Then they have to explain it, again and again, to every bank, shelter, and agency.*  
->  
-> *Runway 90 reads her paperwork, lets her confirm what's really hers, shows her exactly how many days of runway she has, tells her the one next step — and remembers everything so she never has to retell her story.*  
->  
-> *Leaving is an event. Financial independence is the next 90 days."*
-
-### Presenter Walkthrough Script
-> *"This is Maya, day six after leaving an economically abusive household. All data is synthetic.*  
->  
-> *Notice the home screen: Runway 90 remembers that she froze Experian yesterday and has an open TransUnion task. She doesn't have to retell her story because Backboard holds her memory across sessions.*  
->  
-> *Maya reviews a collection letter from Northstar Collections. Google Gemini extracts the account number, amount, and date. But Maya decides what is true. She marks the account 'Not mine'. It immediately updates her Reclaim record without ever labeling it 'fraud'.*  
->  
-> *Her Runway view shows 18 days of essential expenses covered, backed by Tiger Data events. Rather than overwhelming her with twenty tasks, Runway 90 gives her exactly one next action: request $250 for transportation assistance.*  
->  
-> *An advocate logs in through Auth0. Notice the advocate sees only the neutral summary Maya chose to share — no private notes, no unconfirmed facts. The advocate approves the transportation grant. Maya's runway animates from 18 to 31 days.*  
->  
-> *If her phone is ever watched, a quick shake triggers the weather decoy screen.*  
->  
-> *Everything you saw was synthetic. She never had to tell her story twice."*
 
 ---
 
@@ -632,7 +383,6 @@ CREATE TABLE IF NOT EXISTS case_snapshots (
 3. **National Library of Medicine (PMC9121607):** [Examining the Impact of Economic Abuse on Survivors](https://pmc.ncbi.nlm.nih.gov/articles/PMC9121607/)
 4. **Journal of Interpersonal Violence (PMC7427218):** [IPV in Transgender Populations](https://pmc.ncbi.nlm.nih.gov/articles/PMC7427218/)
 5. **New York State Office for the Prevention of Domestic Violence (OPDV):** [Survivors Access Financial Empowerment (SAFE)](https://opdv.ny.gov/survivors-access-financial-empowerment-safe)
-6. **MLH HackHers @ GSU:** FinanceHER Track — Building Financial Independence
 
 ---
 
