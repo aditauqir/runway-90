@@ -81,7 +81,7 @@ struct RoleEntryView: View {
             }
 
             AuthEntryButton(
-                title: AuthAdapter.hasLiveAPIConfiguration ? "Create account" : "Create demo account",
+                title: "Create account",
                 prominent: false
             ) {
                 beginCreateAccount()
