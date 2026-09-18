@@ -3,6 +3,11 @@
 > Read this first. It tells you what exists, what's left, and the rules.
 > The full product spec is in `docs/Runway90_Product_Spec_Packet.md` (copied from
 > `~/Downloads/Runway90_Product_Spec_Packet.md`). The spec is the source of truth.
+>
+> **Deep technical reference: [`docs/TECH_STACK.md`](docs/TECH_STACK.md).**
+> Read it before touching any adapter, integration, build config, or the theme.
+> It has the exact toolchain versions, API endpoints/wire formats (all verified
+> live), DB schema, secrets layout, design-system rules, and known gotchas.
 
 ## What this is
 
