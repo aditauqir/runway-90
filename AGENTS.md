@@ -72,15 +72,22 @@ Runway90/
 1. **Live Auth0** — add SPM package `https://github.com/auth0/Auth0.swift`, wire
    `AuthAdapter.loginLive` (web auth, roles claim → `Role`, MFA action for advocate).
    Keep the demo login fallback; never remove it.
-2. **Live Backboard** — confirm the real endpoint/shape from the sponsor booth/docs
-   and fix `BackboardAdapter.syncToBackboard` (currently best-effort POST to
-   `app.backboard.io/api/memories`, guessed path). Also implement remote `load()` merge.
+2. ~~Live Backboard~~ **DONE (2026-09-18)** — verified live: base
+   `https://app.backboard.io/api`, header `X-API-Key`. Adapter creates one
+   assistant per case (`POST /assistants`, id cached in UserDefaults as
+   `backboard_assistant_id`) and pushes memory snapshots via
+   `POST /threads/messages` with `"memory":"auto"`. Cross-thread recall
+   confirmed (`retrieved_memories: true`). Remaining nice-to-have: remote
+   `load()` merge on cold start (local JSON still drives restore).
 3. **Live Tiger Data** — stand up a tiny HTTP proxy (or use Tiger Cloud REST/SQL-over-HTTP)
    that inserts into a hypertable `events(id, case_id, type, timestamp, payload jsonb)`.
    `TigerDataAdapter` already POSTs `{base}/events` with a bearer token.
-4. **Gemini live test** — adapter is written against
-   `gemini-2.0-flash:generateContent` with `response_mime_type: application/json`.
-   Needs a real key in Secrets.plist and one end-to-end test with the rendered letter.
+4. ~~Gemini live test~~ **DONE (2026-09-18)** — `gemini-2.0-flash` is retired;
+   adapter now uses `gemini-3.6-flash:generateContent` with
+   `response_mime_type: application/json`. End-to-end vision test with the
+   rendered letter PNG returned the exact expected contract (Northstar
+   Collections / 4471 / 2310 / 2024-03 / unconfirmed). Key lives in
+   Secrets.plist (git-ignored).
 5. **App icon** — none yet. Palette below; keep it abstract (no shield/DV imagery).
 6. **Optional PNG fixture** — spec names `maya_collection_letter.png`; we render the
    letter in-app via `SyntheticLetterView` + `ImageRenderer` instead, which satisfies

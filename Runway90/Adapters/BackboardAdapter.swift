@@ -36,18 +36,43 @@ struct BackboardAdapter {
     /// Best-effort remote sync of the memory entries. Failures never block the app.
     private static func syncToBackboard(_ state: CaseState) async {
         guard let key = Secrets.backboardAPIKey else { return }
-        // Backboard exposes an OpenAI-compatible / REST API; adjust the path to
-        // the endpoint given in the hackathon sponsor docs.
-        guard let url = URL(string: "https://app.backboard.io/api/memories") else { return }
-        var req = URLRequest(url: url)
+        // Backboard API (verified live 2026-09-18): base https://app.backboard.io/api,
+        // auth header `X-API-Key`. Memory is attached to an assistant; we keep one
+        // assistant per case and send memory as a thread message the assistant
+        // remembers. Docs: https://docs.backboard.io
+        let base = "https://app.backboard.io/api"
+        var headers = ["Content-Type": "application/json", "X-API-Key": key]
+
+        // Reuse (or create) the case assistant.
+        var assistantId = UserDefaults.standard.string(forKey: "backboard_assistant_id")
+        if assistantId == nil {
+            var req = URLRequest(url: URL(string: "\(base)/assistants")!)
+            req.httpMethod = "POST"
+            headers.forEach { req.setValue($0.value, forHTTPHeaderField: $0.key) }
+            req.httpBody = try? JSONSerialization.data(withJSONObject: [
+                "name": "runway90-\(state.caseRecord.id)",
+                "instructions": "You store case memory for a synthetic demo. Remember every fact you are told."
+            ])
+            if let (data, resp) = try? await URLSession.shared.data(for: req),
+               (resp as? HTTPURLResponse)?.statusCode ?? 500 < 300,
+               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let id = (obj["assistant_id"] ?? obj["id"]) as? String {
+                assistantId = id
+                UserDefaults.standard.set(id, forKey: "backboard_assistant_id")
+            }
+        }
+        guard let assistantId else { return }
+
+        // Push the memory snapshot as a message so Backboard memory retains it.
+        let memoryText = state.memory.map { "\($0.key): \($0.value)" }.joined(separator: "\n")
+        var req = URLRequest(url: URL(string: "\(base)/threads/messages")!)
         req.httpMethod = "POST"
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        let payload: [String: Any] = [
-            "caseId": state.caseRecord.id,
-            "memories": state.memory.map { ["key": $0.key, "value": $0.value] }
-        ]
-        req.httpBody = try? JSONSerialization.data(withJSONObject: payload)
+        headers.forEach { req.setValue($0.value, forHTTPHeaderField: $0.key) }
+        req.httpBody = try? JSONSerialization.data(withJSONObject: [
+            "assistant_id": assistantId,
+            "content": "Case memory update for \(state.caseRecord.id) (synthetic demo data):\n\(memoryText)",
+            "memory": "auto"
+        ])
         _ = try? await URLSession.shared.data(for: req)
     }
 

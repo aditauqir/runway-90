@@ -18,7 +18,8 @@ struct GeminiAdapter {
             return Output(result: Fixture.extractionFixture, isLive: false)
         }
         do {
-            let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=\(key)")!
+            // Verified live 2026-09-18: gemini-2.0-flash is retired; 3.6-flash works.
+            let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=\(key)")!
             var req = URLRequest(url: url)
             req.httpMethod = "POST"
             req.setValue("application/json", forHTTPHeaderField: "Content-Type")
