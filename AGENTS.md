@@ -79,9 +79,15 @@ Runway90/
    `POST /threads/messages` with `"memory":"auto"`. Cross-thread recall
    confirmed (`retrieved_memories: true`). Remaining nice-to-have: remote
    `load()` merge on cold start (local JSON still drives restore).
-3. **Live Tiger Data** — stand up a tiny HTTP proxy (or use Tiger Cloud REST/SQL-over-HTTP)
-   that inserts into a hypertable `events(id, case_id, type, timestamp, payload jsonb)`.
-   `TigerDataAdapter` already POSTs `{base}/events` with a bearer token.
+3. ~~Live Tiger Data~~ **DONE (2026-09-18)** — no proxy. The app connects
+   directly to Tiger Cloud over TLS using the PostgresClientKit SPM package
+   (declared in project.yml). `TIGER_DATA_URL` in Secrets.plist is the full
+   `postgres://` connection string. Hypertable already created on service
+   `db-90`: `events(id text, case_id text, type text, timestamp timestamptz,
+   payload jsonb)` + `create_hypertable('events','timestamp')`. Insert path
+   verified live from Swift. Inspect with:
+   `psql "$TIGER_DATA_URL" -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"`
+   (psql lives at /opt/homebrew/opt/libpq/bin).
 4. ~~Gemini live test~~ **DONE (2026-09-18)** — `gemini-2.0-flash` is retired;
    adapter now uses `gemini-3.6-flash:generateContent` with
    `response_mime_type: application/json`. End-to-end vision test with the

@@ -18,6 +18,7 @@
 		627CE9089A3DC85AA9D09CE1 /* SurvivorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */; };
 		9A16DDB46D9BE631872489CD /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE719B53DEEBF2AFD20F079A /* Secrets.swift */; };
 		9C2995F6FB04C8C2206482C3 /* RunwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20886633F97D8372E36062B9 /* RunwayView.swift */; };
+		A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */ = {isa = PBXBuildFile; productRef = 94A3D79C98BF1B067F9F6350 /* PostgresClientKit */; };
 		A2895C09395B087D6E63CA77 /* Secrets.example.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */; };
 		AF5689CA68DF24CDD2964782 /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A4C6719E4F8C680395E943 /* CaptureView.swift */; };
 		B1F51FCEB902FB4D0F5D3703 /* BackboardAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28F0223B432C1EA67561B9B9 /* BackboardAdapter.swift */; };
@@ -53,6 +54,17 @@
 		EE87782080672EF9DEC0FED6 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		F448141370FC01A08BCF1234 /* TigerDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TigerDataAdapter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9F3069476595209243996836 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		06149C1841C8A092AE6AFBB0 /* Resources */ = {
@@ -164,6 +176,7 @@
 			buildPhases = (
 				FCDB0BC8B931FE29E6F8A6C6 /* Sources */,
 				68195708B5B6E6D6176A42F1 /* Resources */,
+				9F3069476595209243996836 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -171,6 +184,7 @@
 			);
 			name = Runway90;
 			packageProductDependencies = (
+				94A3D79C98BF1B067F9F6350 /* PostgresClientKit */,
 			);
 			productName = Runway90;
 			productReference = 61898C006F5E4A98EF7E2952 /* Runway90.app */;
@@ -200,6 +214,9 @@
 			);
 			mainGroup = 523A7C09A5A887D68EE6EC2D;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A6F99D866585AFFEF202C82B /* Products */;
 			projectDirPath = "";
@@ -430,6 +447,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/codewinsdotcom/PostgresClientKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		94A3D79C98BF1B067F9F6350 /* PostgresClientKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */;
+			productName = PostgresClientKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CDB01344658EFE6B35ADF531 /* Project object */;
 }

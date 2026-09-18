@@ -9,12 +9,18 @@ settings:
     SWIFT_VERSION: "5.10"
     DEVELOPMENT_TEAM: ""     # set your Apple ID team in Xcode > Signing & Capabilities
     CODE_SIGN_STYLE: Automatic
+packages:
+  PostgresClientKit:
+    url: https://github.com/codewinsdotcom/PostgresClientKit
+    from: 1.5.0
 targets:
   Runway90:
     type: application
     platform: iOS
     sources:
       - path: Runway90
+    dependencies:
+      - package: PostgresClientKit
     info:
       path: Runway90/Info.plist
       properties:

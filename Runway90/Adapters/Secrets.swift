@@ -13,8 +13,7 @@ enum Secrets {
 
     static var geminiAPIKey: String?      { nonEmpty("GEMINI_API_KEY") }
     static var backboardAPIKey: String?   { nonEmpty("BACKBOARD_API_KEY") }
-    static var tigerDataURL: String?      { nonEmpty("TIGER_DATA_URL") }        // Postgres/Timescale REST proxy or Tiger Cloud endpoint
-    static var tigerDataToken: String?    { nonEmpty("TIGER_DATA_TOKEN") }
+    static var tigerDataURL: String?      { nonEmpty("TIGER_DATA_URL") }        // full postgres:// connection string to Tiger Cloud
     static var auth0Domain: String?       { nonEmpty("AUTH0_DOMAIN") }
     static var auth0ClientId: String?     { nonEmpty("AUTH0_CLIENT_ID") }
 
