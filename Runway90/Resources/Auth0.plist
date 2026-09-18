@@ -9,5 +9,11 @@
 	<string>U7jFSU34Rfu3DJOCIcUzWCWxG08PwgCL</string>
 	<key>Domain</key>
 	<string>skmpe.us.auth0.com</string>
+	<!-- Public API audience configured in the Auth0 tenant. -->
+	<key>Audience</key>
+	<string>https://YOUR_RUNWAY90_API_IDENTIFIER</string>
+	<!-- Public backend URL. Set this after deploying api/ to Vercel. -->
+	<key>BackendURL</key>
+	<string>https://YOUR_RUNWAY90_BACKEND.vercel.app/api</string>
 </dict>
 </plist>

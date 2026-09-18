@@ -17,19 +17,18 @@
 		557BDB64408EA306FC4B5F25 /* ReclaimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2727E32D3E008E4BF839D8A5 /* ReclaimView.swift */; };
 		563EB7F8715724298BEC0933 /* GeminiAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AB8CE9FC67D6A697C4ECB8 /* GeminiAdapter.swift */; };
 		627CE9089A3DC85AA9D09CE1 /* SurvivorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */; };
-		630727A9AD5AD5EFA6FEA9EA /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = 3D5D005B541FB1E732F65BA9 /* Auth0 */; };
 		6CE49E28660B18D471B5B1B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 983C55BAC310ADBF8FD5C8DF /* Assets.xcassets */; };
 		8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */ = {isa = PBXBuildFile; fileRef = 94CC7D10685938D60AC3274C /* Auth0.plist */; };
 		9A16DDB46D9BE631872489CD /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE719B53DEEBF2AFD20F079A /* Secrets.swift */; };
 		9C2995F6FB04C8C2206482C3 /* RunwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20886633F97D8372E36062B9 /* RunwayView.swift */; };
-		A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */ = {isa = PBXBuildFile; productRef = 94A3D79C98BF1B067F9F6350 /* PostgresClientKit */; };
+		A01CB13D9DD3FD8F5C6E9F8A /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = 3D5D005B541FB1E732F65BA9 /* Auth0 */; };
 		A2895C09395B087D6E63CA77 /* Secrets.example.plist in Resources */ = {isa = PBXBuildFile; fileRef = D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */; };
 		AF5689CA68DF24CDD2964782 /* CaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52A4C6719E4F8C680395E943 /* CaptureView.swift */; };
 		B1F51FCEB902FB4D0F5D3703 /* BackboardAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28F0223B432C1EA67561B9B9 /* BackboardAdapter.swift */; };
 		B876F927F187D7A1D34A5A24 /* DecoyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C39B14D0020329DBD85EA0 /* DecoyView.swift */; };
 		BD5989CD2523453F3FDF05A0 /* AdvocateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5FA338DCD263BACDD254CFE /* AdvocateView.swift */; };
-		C08B423395277E0695141BA9 /* Secrets.plist in Resources */ = {isa = PBXBuildFile; fileRef = EE87782080672EF9DEC0FED6 /* Secrets.plist */; };
 		C9909BF97C5BD1E59E16ED31 /* SyntheticLetterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F6829C623FA502D3189A57E /* SyntheticLetterView.swift */; };
+		D5A9D8285B07BDFD645AC670 /* BackendAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 749B4D9F3A8DCF3FA38B07BD /* BackendAPI.swift */; };
 		D78D8CCAE17400B6D6C697D3 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D690F990841F6AE7363A8A1 /* Theme.swift */; };
 		EEE7717A62ECE57CBDDB513F /* TigerDataAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F448141370FC01A08BCF1234 /* TigerDataAdapter.swift */; };
 /* End PBXBuildFile section */
@@ -47,6 +46,7 @@
 		61898C006F5E4A98EF7E2952 /* Runway90.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Runway90.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F6829C623FA502D3189A57E /* SyntheticLetterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyntheticLetterView.swift; sourceTree = "<group>"; };
 		70439FE1CAC682A6340BD56D /* RoleEntryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleEntryView.swift; sourceTree = "<group>"; };
+		749B4D9F3A8DCF3FA38B07BD /* BackendAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendAPI.swift; sourceTree = "<group>"; };
 		76C552B624E0BC0CB5927742 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurvivorHomeView.swift; sourceTree = "<group>"; };
 		8D690F990841F6AE7363A8A1 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -58,7 +58,6 @@
 		D7C39B14D0020329DBD85EA0 /* DecoyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecoyView.swift; sourceTree = "<group>"; };
 		DE719B53DEEBF2AFD20F079A /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 		EA1C0C60D6B60236B382A271 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		EE87782080672EF9DEC0FED6 /* Secrets.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.plist; sourceTree = "<group>"; };
 		F448141370FC01A08BCF1234 /* TigerDataAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TigerDataAdapter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -67,8 +66,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */,
-				630727A9AD5AD5EFA6FEA9EA /* Auth0 in Frameworks */,
+				A01CB13D9DD3FD8F5C6E9F8A /* Auth0 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -82,7 +80,6 @@
 				94CC7D10685938D60AC3274C /* Auth0.plist */,
 				111607584698300C592AA2C4 /* login_bg.jpg */,
 				D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */,
-				EE87782080672EF9DEC0FED6 /* Secrets.plist */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -155,6 +152,7 @@
 			children = (
 				614F666839FEE08CAC8FB698 /* AuthAdapter.swift */,
 				28F0223B432C1EA67561B9B9 /* BackboardAdapter.swift */,
+				749B4D9F3A8DCF3FA38B07BD /* BackendAPI.swift */,
 				29AB8CE9FC67D6A697C4ECB8 /* GeminiAdapter.swift */,
 				DE719B53DEEBF2AFD20F079A /* Secrets.swift */,
 				F448141370FC01A08BCF1234 /* TigerDataAdapter.swift */,
@@ -195,7 +193,6 @@
 			);
 			name = Runway90;
 			packageProductDependencies = (
-				94A3D79C98BF1B067F9F6350 /* PostgresClientKit */,
 				3D5D005B541FB1E732F65BA9 /* Auth0 */,
 			);
 			productName = Runway90;
@@ -228,7 +225,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				30ACE995E5CD7D8FCB184BE0 /* XCRemoteSwiftPackageReference "Auth0.swift" */,
-				49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A6F99D866585AFFEF202C82B /* Products */;
@@ -248,7 +244,6 @@
 				6CE49E28660B18D471B5B1B8 /* Assets.xcassets in Resources */,
 				8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */,
 				A2895C09395B087D6E63CA77 /* Secrets.example.plist in Resources */,
-				C08B423395277E0695141BA9 /* Secrets.plist in Resources */,
 				52BD82438FB74363757C9782 /* login_bg.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -264,6 +259,7 @@
 				1B6E6823BB3F7E5C57C9370F /* AppStore.swift in Sources */,
 				3E6A42F6865BFA044AF8575E /* AuthAdapter.swift in Sources */,
 				B1F51FCEB902FB4D0F5D3703 /* BackboardAdapter.swift in Sources */,
+				D5A9D8285B07BDFD645AC670 /* BackendAPI.swift in Sources */,
 				AF5689CA68DF24CDD2964782 /* CaptureView.swift in Sources */,
 				B876F927F187D7A1D34A5A24 /* DecoyView.swift in Sources */,
 				38F232FCE01326FE1937D8EA /* DisclosureView.swift in Sources */,
@@ -473,14 +469,6 @@
 				minimumVersion = 2.22.0;
 			};
 		};
-		49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/codewinsdotcom/PostgresClientKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.5.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -488,11 +476,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 30ACE995E5CD7D8FCB184BE0 /* XCRemoteSwiftPackageReference "Auth0.swift" */;
 			productName = Auth0;
-		};
-		94A3D79C98BF1B067F9F6350 /* PostgresClientKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */;
-			productName = PostgresClientKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

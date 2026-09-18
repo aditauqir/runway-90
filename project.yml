@@ -10,9 +10,6 @@ settings:
     DEVELOPMENT_TEAM: "L22992699P"
     CODE_SIGN_STYLE: Automatic
 packages:
-  PostgresClientKit:
-    url: https://github.com/codewinsdotcom/PostgresClientKit
-    from: 1.5.0
   Auth0:
     url: https://github.com/auth0/Auth0.swift
     from: 2.22.0
@@ -22,8 +19,9 @@ targets:
     platform: iOS
     sources:
       - path: Runway90
+        excludes:
+          - Resources/Secrets.plist
     dependencies:
-      - package: PostgresClientKit
       - package: Auth0
     info:
       path: Runway90/Info.plist

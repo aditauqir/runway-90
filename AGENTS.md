@@ -26,17 +26,20 @@ remembers the case.**
 ```
 project.yml                      # XcodeGen spec — regenerate project with `xcodegen generate`
 Runway90.xcodeproj               # generated; commit it, but project.yml is authoritative
+api/[...path].js                 # Vercel backend: Auth0 JWT + Tiger/Gemini/Backboard proxy
+.env.example                     # backend variable names only; never add real values
 Runway90/
   App/Runway90App.swift          # entry, root router, shake-to-quick-exit, QuickExitButton
   Theme/Theme.swift              # palette + liquid glass modifiers (see Design below)
   Models/Models.swift            # spec §5 data model + Maya fixture + Gemini JSON contract
   Store/AppStore.swift           # single @MainActor ObservableObject: all state + actions
   Adapters/
-    Secrets.swift                # reads Resources/Secrets.plist (git-ignored)
-    GeminiAdapter.swift          # live vision extraction OR labelled "Demo extraction"
-    BackboardAdapter.swift       # local JSON persistence + best-effort Backboard sync
-    TigerDataAdapter.swift       # event POST to Tiger endpoint OR "Demo data source"
-    AuthAdapter.swift            # demo role login; TODO live Auth0.swift wiring
+    BackendAPI.swift             # authenticated API client; no provider secrets in app
+    Secrets.swift                # legacy local template reader, never bundled
+    GeminiAdapter.swift          # backend vision extraction OR labelled "Demo extraction"
+    BackboardAdapter.swift       # local cache + authenticated backend memory sync
+    TigerDataAdapter.swift       # authenticated backend facade for Tiger Data
+    AuthAdapter.swift            # live Auth0 login + API token, with demo fallback
   Views/
     DisclosureView.swift         # synthetic-data warning, first screen
     RoleEntryView.swift          # Maya (survivor) / Demo Advocate entry
@@ -69,8 +72,11 @@ Runway90/
 - [x] Safety: shake + triple-tap quick exit, visible Exit shield button (simulator
       fallback), decoy screen with no case data, duress-PIN placeholder, delete demo
       case, synthetic-data banners, neutral "You have a reminder" label.
-- [x] Persistence survives restart via local JSON (Backboard fallback) —
-      `restoredFromMemory` drives the "Demo memory fallback / Backboard memory" chip.
+- [x] Live Auth0 access tokens now authenticate the hosted backend.
+- [x] Tiger Data, Gemini, and Backboard credentials moved server-side behind
+      `api/[...path].js`; Tiger snapshots are scoped by verified Auth0 `sub`.
+- [x] Persistence survives restart via a local offline cache plus authenticated
+      Tiger snapshot restore for live survivor sessions.
 
 ## Status — TODO (pick up here)
 
@@ -87,31 +93,23 @@ Runway90/
    `api.idToken.setCustomClaim("https://runway90.app/roles", event.authorization?.roles || [])`
    plus (optional) an MFA challenge when roles include `advocate`.
    Needs one on-device end-to-end test (web auth can't run headless).
-2. ~~Live Backboard~~ **DONE (2026-09-18)** — verified live: base
-   `https://app.backboard.io/api`, header `X-API-Key`. Adapter creates one
-   assistant per case (`POST /assistants`, id cached in UserDefaults as
-   `backboard_assistant_id`) and pushes memory snapshots via
-   `POST /threads/messages` with `"memory":"auto"`. Cross-thread recall
-   confirmed (`retrieved_memories: true`). Remaining nice-to-have: remote
-   `load()` merge on cold start (local JSON still drives restore).
-3. ~~Live Tiger Data~~ **DONE (2026-09-18)** — no proxy. The app connects
-   directly to Tiger Cloud over TLS using the PostgresClientKit SPM package
-   (declared in project.yml). `TIGER_DATA_URL` in Secrets.plist is the full
-   `postgres://` connection string. Hypertable already created on service
-   `db-90`: `events(id text, case_id text, type text, timestamp timestamptz,
-   payload jsonb)` + `create_hypertable('events','timestamp')`. The app also
-   upserts a full synthetic `CaseState` into `case_snapshots`, keyed by the
-   Auth0 ID-token `sub` claim (stable demo IDs for demo login), and restores it
-   after survivor login on a new install. Insert/restore path is compile-
-   verified; inspect with:
+2. ~~Live Backboard~~ **DONE (2026-09-18)** — the backend owns the
+   `BACKBOARD_API_KEY`, creates one assistant per Auth0 subject, and pushes
+   memory snapshots through `/api/memory`.
+3. ~~Live Tiger Data~~ **DONE (2026-09-18)** — the backend owns
+   `TIGER_DATA_URL`, validates Auth0 access tokens, and upserts a full synthetic
+   `CaseState` into `case_snapshots` keyed by the verified Auth0 `sub`. The iOS
+   target no longer includes PostgresClientKit or a database password. The
+   existing Tiger schema is:
+   `events(id text, case_id text, type text, timestamp timestamptz, payload jsonb)`
+   plus `case_snapshots(owner_id text primary key, case_id text, updated_at timestamptz, payload jsonb)`.
+   Inspect with:
    `psql "$TIGER_DATA_URL" -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"`
    (psql lives at /opt/homebrew/opt/libpq/bin).
-4. ~~Gemini live test~~ **DONE (2026-09-18)** — `gemini-2.0-flash` is retired;
-   adapter now uses `gemini-3.6-flash:generateContent` with
-   `response_mime_type: application/json`. End-to-end vision test with the
-   rendered letter PNG returned the exact expected contract (Northstar
-   Collections / 4471 / 2310 / 2024-03 / unconfirmed). Key lives in
-   Secrets.plist (git-ignored).
+4. ~~Gemini live test~~ **DONE (2026-09-18)** — the backend owns the Gemini
+   key and proxies `gemini-3.6-flash:generateContent` with
+   `response_mime_type: application/json`; missing backend configuration keeps
+   the honest `Demo extraction` fallback.
 5. **App icon** — none yet. Palette below; keep it abstract (no shield/DV imagery).
 6. **Optional PNG fixture** — spec names `maya_collection_letter.png`; we render the
    letter in-app via `SyntheticLetterView` + `ImageRenderer` instead, which satisfies
@@ -164,8 +162,9 @@ xcodebuild -project Runway90.xcodeproj -scheme Runway90 \
   -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-Secrets: `cp Runway90/Resources/Secrets.example.plist Runway90/Resources/Secrets.plist`
-and fill keys. All keys optional; missing keys = labelled demo fallbacks.
+Backend secrets belong in Vercel environment variables named in `.env.example`.
+Do not put them in `Secrets.plist`, the iOS target, an IPA, or GitHub. Missing
+backend configuration = labelled demo fallbacks.
 
 Demo PIN to leave the decoy screen: `0000`. Quick exit: shake, triple-tap, or the
 shield button in every toolbar.

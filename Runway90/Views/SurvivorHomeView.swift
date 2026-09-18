@@ -40,7 +40,7 @@ struct SurvivorHomeView: View {
                                 .font(.caption2)
                                 .foregroundStyle(RW.pink.opacity(0.9))
                         } else if store.restoredFromMemory {
-                            Label(BackboardAdapter.isLive ? "Backboard memory" : "Demo memory fallback",
+                            Label(BackboardAdapter.isLive(for: store.session?.accessToken) ? "Backboard memory" : "Demo memory fallback",
                                   systemImage: "brain.head.profile")
                                 .font(.caption2)
                                 .foregroundStyle(RW.mist.opacity(0.8))

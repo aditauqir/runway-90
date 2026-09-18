@@ -27,6 +27,8 @@ struct AuthAdapter {
         var displayName: String
         var isDemo: Bool
         var mfaVerified: Bool
+        /// Auth0 access token for the Runway 90 API. Demo sessions have none.
+        var accessToken: String?
         /// Auth0 `sub` for live sessions; stable demo IDs for local roles.
         /// Tiger snapshot rows are scoped by this identifier.
         var subject: String
@@ -47,6 +49,7 @@ struct AuthAdapter {
                 displayName: role == .survivor ? "Maya" : "Demo Advocate",
                 isDemo: true,
                 mfaVerified: role == .survivor, // advocate must pass the demo-MFA sheet
+                accessToken: nil,
                 subject: role == .survivor ? "demo-maya-001" : "demo-advocate-001")
     }
 
@@ -56,8 +59,8 @@ struct AuthAdapter {
 
     @MainActor
     static func loginLive() async throws -> Session {
-        let credentials = try await Auth0
-            .webAuth()
+        let webAuth = apiAudience.map { Auth0.webAuth().audience($0) } ?? Auth0.webAuth()
+        let credentials = try await webAuth
             .scope("openid profile email")
             .start()
 
@@ -76,12 +79,22 @@ struct AuthAdapter {
                        displayName: role == .survivor ? "Maya" : name,
                        isDemo: false,
                        mfaVerified: true, // tenant policy enforces MFA before we get here
+                       accessToken: credentials.accessToken,
                        subject: subject)
     }
 
     @MainActor
     static func logoutLive() async {
         try? await Auth0.webAuth().clearSession()
+    }
+
+    private static var apiAudience: String? {
+        guard let path = Bundle.main.path(forResource: "Auth0", ofType: "plist"),
+              let values = NSDictionary(contentsOfFile: path),
+              let audience = values["Audience"] as? String,
+              !audience.isEmpty,
+              !audience.contains("YOUR_") else { return nil }
+        return audience
     }
 
     /// Minimal JWT payload decoder (we only need custom claims; signature

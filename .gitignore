@@ -11,4 +11,10 @@ xcuserdata/
 # Secrets — never commit real keys
 Runway90/Resources/Secrets.plist
 
+# Backend dependencies and local environment values
+node_modules/
+.env
+.env.*
+!.env.example
+
 .DS_Store

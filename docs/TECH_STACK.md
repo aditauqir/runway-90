@@ -37,7 +37,6 @@ compiles/links but cannot boot an app. On-device runs happen through Xcode GUI.
 
 | Package | Version | Purpose |
 |---|---|---|
-| [PostgresClientKit](https://github.com/codewinsdotcom/PostgresClientKit) | `from: 1.5.0` | Direct TLS Postgres wire protocol to Tiger Cloud (pure Swift, SCRAM-SHA-256, works on iOS). Pulls in BlueSocket/BlueSSLService transitively. |
 | [Auth0.swift](https://github.com/auth0/Auth0.swift) | `from: 2.22.0` | Universal Login (ASWebAuthenticationSession under the hood), token exchange, session clearing |
 
 No other third-party code. Charts is Apple's `Charts` framework (SwiftUI, iOS 16+).
@@ -77,9 +76,10 @@ Combine beyond `@Published`, no Coordinator layer — routing is a 5-case enum.
 │ Gemini │  │ Backboard  │  │ TigerData  │  │  Auth    │
 │Adapter │  │  Adapter   │  │  Adapter   │  │ Adapter  │
 └────────┘  └────────────┘  └────────────┘  └──────────┘
- vision JSON  local JSON +    direct PG        Auth0.swift
- extraction   remote memory   INSERT into      Universal Login
-              sync            hypertable       + demo fallback
+ backend     backend       BackendAPI       Auth0.swift
+ proxy       proxy         → Tiger Cloud    Universal Login
+              + local      owner-scoped     + API token
+              fallback     snapshots        + demo fallback
 ```
 
 **Adapter contract (hard rule):** every adapter exposes `isLive: Bool` derived
@@ -95,15 +95,16 @@ state but never reports itself as live.
 2. `FactConfirmCard` → `store.confirm(fact:as:)` — the ONLY path into
    `state.facts`. Emits `fact_confirmed` / `account_marked_not_mine` /
    `fact_needs_review` events.
-3. Every `appendEvent` writes to `state.timeline` (local source of truth for
-   UI), fires `TigerDataAdapter.record` (background PG INSERT), and persists.
+3. Every `appendEvent` writes to `state.timeline` (offline UI cache), fires
+   `TigerDataAdapter.record` (authenticated backend INSERT into Tiger Data),
+   and persists.
 4. `RunwayView` → `shareSummary()` sets `summaryShared`, emits
    `summary_shared`, records sharing preference in memory.
 5. `AdvocateView` → `approveRequest()` → `recalculateRunway(to: 31, …)` →
    `runway_recalculated` event + `RunwaySnapshot` appended (Charts line chart
    re-renders; big number animates via `.contentTransition(.numericText())`).
-6. Every `persist()` → `BackboardAdapter.save` → local JSON write + async
-   remote memory push.
+6. Every `persist()` → local JSON cache + authenticated backend snapshot upsert
+   into Tiger Data and Backboard memory push when a live Auth0 token exists.
 
 ---
 
@@ -141,9 +142,11 @@ can be shown the memory table driving the copy.
 
 ## 4. Sponsor integrations — exact wire formats (all verified live 2026-09-18)
 
-### 4.1 Gemini (`Adapters/GeminiAdapter.swift`) — ✅ live
+### 4.1 Gemini (`Adapters/GeminiAdapter.swift` + `api/[...path].js`) — ✅ backend-proxied
 
-- Endpoint: `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}`
+- iOS endpoint: authenticated `POST /api/extract`.
+- Backend endpoint: `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}`.
+- `GEMINI_API_KEY` exists only in Vercel environment variables; it is never bundled into the iPhone app.
 - ⚠️ `gemini-2.0-flash` is **retired** (404 with a migration message). Current model: `gemini-3.6-flash`.
 - Request: `contents[0].parts = [ {text: prompt}, {inline_data: {mime_type: "image/jpeg", data: base64}} ]`,
   `generationConfig.response_mime_type: "application/json"` (forces raw JSON, no markdown fences).
@@ -159,9 +162,11 @@ can be shown the memory table driving the copy.
   scale 3, width 360) — the fixture letter is rendered in-app, so it can never
   be missing from a bundle.
 
-### 4.2 Backboard (`Adapters/BackboardAdapter.swift`) — ✅ live
+### 4.2 Backboard (`Adapters/BackboardAdapter.swift` + `api/[...path].js`) — ✅ backend-proxied
 
-- Base URL: `https://app.backboard.io/api` · Auth header: **`X-API-Key`** (NOT Bearer).
+- iOS endpoint: authenticated `POST /api/memory`.
+- Backend base URL: `https://app.backboard.io/api` · Auth header: **`X-API-Key`** (NOT Bearer).
+- `BACKBOARD_API_KEY` exists only in Vercel environment variables; it is never bundled into the iPhone app.
 - Docs: <https://docs.backboard.io> (index at `https://backboard-docs.docsalot.dev/llms.txt`).
 - Model: one **assistant per case**; memory is shared across all threads of an assistant.
   - `POST /assistants` `{name, instructions}` → response field `assistant_id`
@@ -173,17 +178,19 @@ can be shown the memory table driving the copy.
 - Existing live assistant on the tenant key: `3a48867e-4f5b-4dc4-9974-8efebc4c6d94`
   (name `runway90-case-maya-001`) — the app will reuse its own cached ID, so
   this one is just historical.
-- Local persistence (the JSON blob above) is ALWAYS written first; remote sync
-  is fire-and-forget (`Task { await syncToBackboard(state) }`). Restore-on-launch
-  currently reads local JSON only (remote `load()` merge is an open nice-to-have).
+- Local persistence (the JSON blob above) remains an offline cache. Live sessions
+  push memory through the authenticated backend; the full recoverable case
+  snapshot is restored from Tiger Data after Auth0 login.
 
-### 4.3 Tiger Data (`Adapters/TigerDataAdapter.swift`) — ✅ live
+### 4.3 Tiger Data (`Adapters/TigerDataAdapter.swift` + `api/[...path].js`) — ✅ backend-proxied
 
-- **No proxy.** The app speaks the Postgres wire protocol directly to Tiger
-  Cloud over TLS via PostgresClientKit (`ssl = true`, `.scramSHA256` credential).
-- Config: `TIGER_DATA_URL` in Secrets.plist = full connection string
-  `postgres://user:pass@host:port/db?sslmode=require`, parsed with
-  `URLComponents` in `connectionConfig()`.
+- The iPhone never opens Postgres and never receives `TIGER_DATA_URL`.
+- Auth0 access token → backend JWT verification → Tiger query scoped by the
+  token's `sub` claim. A client-supplied owner ID is intentionally ignored.
+- Backend environment variable: `TIGER_DATA_URL` = full connection string
+  `postgres://user:pass@host:port/db?sslmode=require`.
+- API routes: `GET/PUT/DELETE /api/case` for the per-user snapshot and
+  `POST /api/events` for the event stream.
 - Service: name `db-90`, host `jtf4omyes3.ehv2z06xub.tsdb.cloud.timescale.com`,
   port `39663`, db `tsdb`, user `tsdbadmin`.
 - Schema (already created on the service):
@@ -201,17 +208,15 @@ can be shown the memory table driving the copy.
     payload jsonb NOT NULL
   );
   ```
-- Insert path: prepared statement, `payload` serialized to a JSON string cast
-  `::jsonb`, timestamp as `PostgresTimestampWithTimeZone(date:)`. Runs on
-  `DispatchQueue.global(qos: .utility)` — one short-lived connection per event
-  (fine at demo volume; pool it if this ever grows).
+- Insert path: parameterized `pg` queries in the Vercel Node function, with a
+  small pooled connection count suitable for the hackathon demo.
 - Event types written: `fact_confirmed`, `account_marked_not_mine`,
   `fact_needs_review`, `assistance_request_created`,
   `assistance_request_approved`, `runway_recalculated`, `summary_shared`.
-- Snapshot path: every `persist()` upserts the complete synthetic `CaseState`
-  into `case_snapshots`; live Auth0 sessions use the ID-token `sub` claim as
-  `owner_id`, while demo roles use stable synthetic IDs. A new install loads
-  that snapshot after survivor login and shows a `Tiger Data restore` chip.
+- Snapshot path: every live survivor `persist()` upserts the complete synthetic
+  `CaseState` into `case_snapshots`; the backend uses the Auth0 access-token
+  `sub` as `owner_id`. A new install loads that snapshot after survivor login
+  and shows a `Tiger Data restore` chip. Demo roles stay local and labeled.
 - Judge-facing inspection query:
   ```sh
   /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
@@ -224,7 +229,8 @@ can be shown the memory table driving the copy.
 
 - Tenant `skmpe.us.auth0.com`, native app client `U7jFSU34Rfu3DJOCIcUzWCWxG08PwgCL`,
   token endpoint auth method `none` (public client + PKCE).
-- SDK config: `Resources/Auth0.plist` (`ClientId`, `Domain`) — read
+- SDK config: `Resources/Auth0.plist` (`ClientId`, `Domain`, public API
+  `Audience`, and public `BackendURL`) — read
   automatically by Auth0.swift. **Committed on purpose** (client ID + domain are
   not secrets for a public client).
 - Callback mode: **custom URL scheme** (`CFBundleURLTypes` →
@@ -232,13 +238,18 @@ can be shown the memory table driving the copy.
   entitlement needed. Allowlisted callback/logout URLs on the tenant:
   `com.hackhers.runway90://skmpe.us.auth0.com/ios/com.hackhers.runway90/callback`
   (plus the https twins).
-- Login: `Auth0.webAuth().scope("openid profile email").start()` (async/await).
+- Login: `Auth0.webAuth().audience(Audience).scope("openid profile email").start()`
+  (async/await). The resulting access token is sent as `Authorization: Bearer`
+  to the backend.
 - Role mapping: custom ID-token claim **`https://runway90.app/roles`**
   (string array). `advocate` in array → `.advocate`; otherwise `.survivor`.
   Claim decoded by a minimal base64url JWT payload split (signature trust comes
   from the SDK's code-exchange over TLS; do not re-verify locally).
 - Live advocate sessions have `mfaVerified = true` and **skip the in-app
   demo-MFA sheet** — MFA is a tenant responsibility.
+- The backend validates the same audience and issuer with Auth0 JWKS, then uses
+  the verified token `sub` as the only Tiger `owner_id`. Auth0 therefore links
+  a person to their own stored case; the iPhone never chooses the database owner.
 - Tenant-side setup still required (human, dashboard):
   1. Roles `survivor` + `advocate`; assign to test users.
   2. Post-login Action:
@@ -253,14 +264,18 @@ can be shown the memory table driving the copy.
 
 | File | Committed? | Contents |
 |---|---|---|
-| `Runway90/Resources/Secrets.plist` | **NO** (.gitignore) | `GEMINI_API_KEY`, `BACKBOARD_API_KEY`, `TIGER_DATA_URL` — all currently filled with working values on this machine |
-| `Runway90/Resources/Secrets.example.plist` | yes | placeholder template; `Secrets.swift` treats values prefixed `YOUR_` as absent |
-| `Runway90/Resources/Auth0.plist` | yes | Auth0 ClientId + Domain (public-client values, not secret) |
+| `Runway90/Resources/Secrets.plist` | **NO** and explicitly excluded from the Xcode target | Legacy local template only; it is never bundled or used for live cloud access |
+| `.env.example` | yes | Names of backend environment variables; contains no values |
+| Vercel environment variables | **NO** | `GEMINI_API_KEY`, `BACKBOARD_API_KEY`, `TIGER_DATA_URL`, `AUTH0_AUDIENCE` |
+| `Runway90/Resources/Auth0.plist` | yes | Auth0 ClientId, Domain, API Audience, and backend URL; public configuration |
 
-`Secrets.swift` reads the plist once into a static dictionary; every accessor
-returns `nil` for missing/empty/`YOUR_`-prefixed values, which flips the
-corresponding adapter to its labelled demo fallback. **A missing key must never
-crash or block anything.**
+The iOS app uses `BackendAPI` for live integrations. Missing backend URL,
+missing Auth0 API audience, or an absent access token flips the app to its
+labelled demo fallback. **A missing key must never crash or block anything.**
+
+The backend is deployed from the repository root with Vercel. Set the values in
+`.env.example` as Vercel project environment variables; never put those values
+in `Auth0.plist`, an IPA, or GitHub.
 
 ---
 
@@ -313,12 +328,14 @@ Liquid Glass implementation:
    Install an iOS runtime via Xcode ▸ Settings ▸ Components to boot the app locally.
 2. **Auth0 login untested end-to-end** (needs a screen). Everything up to
    `webAuth().start()` is compile-verified only.
-3. **Backboard restore** is local-JSON-only; remote memory is write-path only.
-4. **TigerDataAdapter opens one connection per event/snapshot operation** —
-   acceptable at demo scale, replace with a pooled connection if volume grows.
-5. **PostgresClientKit** is minimally maintained upstream; it builds clean on
-   Xcode 27/Swift 5.10 today. If it ever breaks, fallback plan is a tiny HTTP
-   proxy (the adapter's `record(event:)` signature is transport-agnostic).
+3. **Backboard restore** is represented by the Tiger snapshot; Backboard memory
+   is currently write-path only.
+4. **The backend opens a small pooled connection set to Tiger Data** —
+   acceptable at demo scale; move to a managed pool or connection proxy if
+   volume grows.
+5. **Vercel environment variables are required for live integrations** — the
+   iOS target intentionally falls back to labeled demo behavior when the
+   backend URL or Auth0 API audience is still a placeholder.
 6. `AppStore` mixes state + actions + derived views in one class deliberately
    (hackathon speed). Do not refactor into layers mid-event.
 7. Free-vs-paid signing: Team `L22992699P` is set; if signing fails on device,

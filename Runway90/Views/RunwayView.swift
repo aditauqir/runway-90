@@ -21,7 +21,7 @@ struct RunwayView: View {
                         .animation(.smooth(duration: 0.8), value: store.state.caseRecord.runwayDays)
                     Text("days")
                         .font(.headline).foregroundStyle(RW.pink)
-                    Label(TigerDataAdapter.isLive ? "Tiger Data" : "Demo data source",
+                    Label(TigerDataAdapter.isLive(accessToken: store.session?.accessToken) ? "Tiger Data" : "Demo data source",
                           systemImage: "chart.line.uptrend.xyaxis")
                         .font(.caption2).foregroundStyle(RW.mist.opacity(0.7))
                 }

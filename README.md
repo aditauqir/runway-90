@@ -177,11 +177,11 @@ Runway 90 integrates four sponsors where each serves a load-bearing architectura
        │   (Vision AI)     │            │  (Case Memory)    │            │ (Event Sourcing)  │
        └───────────────────┘            └───────────────────┘            └───────────────────┘
                  │                                │                                │
-        Multimodal extraction           Long-term state recall           Direct TLS Postgres
-        gemini-3.6-flash                app.backboard.io/api             hypertable on db-90
-        Strict JSON schema              One assistant per case           Timescale continuous
-        Zero-markdown contract          Thread messages with             aggregates for runway
-                                        memory: "auto"                   history chart
+        Multimodal extraction           Long-term state recall           Authenticated API proxy
+        gemini-3.6-flash                app.backboard.io/api             Vercel → Tiger Cloud
+        Strict JSON schema              One assistant per subject        Auth0 sub-scoped
+        Zero-markdown contract          Thread messages with             snapshot + events
+                                        memory: "auto"
                  │                                │                                │
                  └────────────────────────────────┼────────────────────────────────┘
                                                   │
@@ -208,24 +208,29 @@ sequenceDiagram
     actor Survivor
     participant Auth0
     participant App as Runway 90 AppStore
+    participant API as Runway 90 API
     participant Tiger as Tiger Cloud
     participant Gemini
     actor Advocate
 
     Survivor->>Auth0: Universal Login (PKCE)
-    Auth0-->>App: ID token (sub + roles)
-    App->>Tiger: SELECT case_snapshots WHERE owner_id = sub
+    Auth0-->>App: ID token + API access token
+    App->>API: GET /api/case (Bearer token)
+    API->>Auth0: Verify issuer, audience, signature
+    API->>Tiger: SELECT case_snapshots WHERE owner_id = verified sub
     Tiger-->>App: CaseState JSONB (or no snapshot)
     App->>App: Restore local case or seed synthetic fixture
 
     Survivor->>App: Review synthetic letter
-    App->>Gemini: Extract structured facts
+    App->>API: POST /api/extract (Bearer token + image)
+    API->>Gemini: Extract structured facts with server key
     Gemini-->>App: Unconfirmed facts JSON
     Survivor->>App: Mine / Not mine / Not sure
-    App->>Tiger: INSERT event + UPSERT case snapshot
+    App->>API: POST /api/events + PUT /api/case
+    API->>Tiger: INSERT event + UPSERT owner-scoped snapshot
 
     Survivor->>App: Share neutral summary
-    App->>Tiger: INSERT summary_shared event
+    App->>API: INSERT summary_shared event
     Advocate->>Auth0: Sign in as advocate
     Auth0-->>App: Advocate role + MFA verified
     App-->>Advocate: Shared summary only
@@ -236,9 +241,9 @@ sequenceDiagram
 
 ### 1. Google Gemini API (Vision & Structured Extraction)
 - **Role:** Extracts accounts, balances, dates, and counterparties from camera photos or photo library documents.
-- **Model:** `gemini-3.6-flash` via Google Generative Language API endpoint:
+- **Model:** `gemini-3.6-flash` via the authenticated backend proxy:
   ```http
-  POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}
+  POST /api/extract
   ```
 - **Contract:** Uses `generationConfig.response_mime_type: "application/json"` to enforce raw JSON parsing without markdown fences (` ```json `):
   ```json
@@ -259,7 +264,8 @@ sequenceDiagram
 
 ### 2. Backboard (Cross-Session Persistent Memory)
 - **Role:** Overcomes LLM statelessness by maintaining long-term case memory, past actions, frozen bureaus, and survivor preferences.
-- **Endpoint:** `https://app.backboard.io/api` with authentication header `X-API-Key: {BACKBOARD_API_KEY}`.
+- **Endpoint:** iOS calls authenticated `POST /api/memory`; only the backend
+  calls `https://app.backboard.io/api` with `X-API-Key: {BACKBOARD_API_KEY}`.
 - **Implementation:**
   - Creates/reuses one assistant per case (`POST /assistants` with name `runway90-{caseId}`).
   - Emits memory snapshots via `POST /threads/messages` with `"memory": "auto"`.
@@ -270,7 +276,9 @@ sequenceDiagram
 ### 3. Tiger Data / Timescale Cloud (Event-Sourced Runway)
 - **Role:** Financial runway is a continuous time-series aggregate, not a static number. Every confirmed fact, expense, and request is an immutable event, while the latest synthetic `CaseState` is stored as a recoverable JSONB snapshot.
 - **Service Details:** Tiger Cloud service `db-90`, database `tsdb`.
-- **Direct Wire Protocol:** Direct TLS connection from Swift to PostgreSQL via `PostgresClientKit` (SCRAM-SHA-256 authentication). **No middle-tier proxy required.**
+- **Access path:** iOS sends an Auth0 bearer token to the backend. The backend
+  verifies issuer, audience, and signature, then uses the verified `sub` for
+  every Tiger query. `TIGER_DATA_URL` never enters the iOS bundle.
 - **Database Hypertable Schema:**
   ```sql
   CREATE TABLE events (
@@ -283,7 +291,9 @@ sequenceDiagram
   SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
   ```
 - **Event Types Emitted:** `fact_confirmed`, `account_marked_not_mine`, `fact_needs_review`, `assistance_request_created`, `assistance_request_approved`, `runway_recalculated`, `summary_shared`.
-- **Recovery Snapshot:** `case_snapshots` is keyed by `owner_id`; live Auth0 sessions use the ID token `sub` claim, and demo roles use stable synthetic IDs. A fresh install can load the snapshot after login.
+- **Recovery Snapshot:** `case_snapshots` is keyed by `owner_id`; live Auth0
+  sessions use the verified access-token `sub`. A fresh install can load the
+  snapshot after login. Demo roles remain intentionally local.
 - **Fallback:** Local event log in `CaseState.timeline` with `Demo data source` badge.
 
 ### 4. Auth0 by Okta (Role Separation & Scoped Access)
@@ -294,6 +304,9 @@ sequenceDiagram
   - Otherwise -> `.survivor` (Survivor Reclaim Workspace).
 - **Data Scoping:** The advocate view can **only** query explicitly shared aggregate summaries (`summaryShared == true`). Advocates have zero access to document photos, raw timelines, or unconfirmed facts.
 - **Tiger Link:** Auth0's stable `sub` claim scopes each survivor's Tiger snapshot; the app never uses an email address as the database owner key.
+- **API audience:** `Auth0.plist` contains the public API audience and backend
+  URL. The access token is sent to the backend; database/provider credentials
+  are server-side Vercel environment variables only.
 - **MFA Enforcement:** Tenant-enforced multi-factor authentication for advocates. Live Auth0 sessions skip in-app MFA; demo mode provides a 6-digit simulation sheet.
 - **Fallback:** Labelled `Demo login` local role toggle.
 
@@ -380,11 +393,11 @@ Runway 90 uses `project.yml` as its source of truth to avoid merge conflicts in 
 ```sh
 xcodegen generate
 ```
-*This produces a clean, configured `Runway90.xcodeproj` linked with Swift Package dependencies (`PostgresClientKit` and `Auth0.swift`).*
+*This produces a clean, configured `Runway90.xcodeproj` linked with the `Auth0.swift` package. Tiger Data, Gemini, and Backboard are reached through the authenticated hosted backend in `api/`.*
 
 ---
 
-### 3. Configuration & Secrets (Optional)
+### 3. Configuration & Secrets
 
 The app is **100% functional out of the box** without any API keys. When keys are absent, all adapters smoothly run labelled demo fallbacks:
 - Gemini -> *"Demo extraction"*
@@ -392,42 +405,63 @@ The app is **100% functional out of the box** without any API keys. When keys ar
 - Tiger Data -> *"Demo data source"*
 - Auth0 -> *"Demo login"* / *"Demo approval"*
 
-To enable live cloud integrations, set up `Secrets.plist`:
+The iOS app must not contain Tiger, Gemini, or Backboard credentials. For a
+demo-only build, leave the backend URL as its placeholder and the app uses the
+labeled fallbacks. For a shared live build, deploy the API and configure its
+server-side environment variables:
 
 ```sh
-# Copy template
-cp Runway90/Resources/Secrets.example.plist Runway90/Resources/Secrets.plist
+npm install
+vercel deploy
 ```
 
-Open `Runway90/Resources/Secrets.plist` and populate your credentials:
+Set the variables from `.env.example` in Vercel:
 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <!-- Google AI Studio Gemini API Key -->
-    <key>GEMINI_API_KEY</key>
-    <string>your_gemini_api_key_here</string>
-
-    <!-- Backboard.io API Key -->
-    <key>BACKBOARD_API_KEY</key>
-    <string>your_backboard_api_key_here</string>
-
-    <!-- Tiger Data / Timescale Cloud PostgreSQL URL -->
-    <key>TIGER_DATA_URL</key>
-    <string>postgres://tsdbadmin:password@host:port/tsdb?sslmode=require</string>
-
-    <!-- Auth0 Tenant Configuration -->
-    <key>AUTH0_DOMAIN</key>
-    <string>your-tenant.us.auth0.com</string>
-    <key>AUTH0_CLIENT_ID</key>
-    <string>your_auth0_client_id_here</string>
-</dict>
-</plist>
+```env
+AUTH0_DOMAIN=skmpe.us.auth0.com
+AUTH0_AUDIENCE=https://your-runway90-api-identifier
+TIGER_DATA_URL=postgres://user:password@host:port/tsdb?sslmode=require
+GEMINI_API_KEY=stored-only-in-Vercel
+BACKBOARD_API_KEY=stored-only-in-Vercel
+GEMINI_MODEL=gemini-3.6-flash
+BACKBOARD_BASE_URL=https://app.backboard.io/api
 ```
 
-> **Note on Auth0:** The repository includes a pre-configured `Runway90/Resources/Auth0.plist` pointed to a shared demo client with custom callback scheme `com.hackhers.runway90`.
+Then replace the public `Audience` and `BackendURL` placeholders in
+`Runway90/Resources/Auth0.plist`, regenerate Xcode, and rebuild the app. The
+Auth0 user’s verified `sub` becomes the Tiger `case_snapshots.owner_id`, so a
+new phone restores that user’s own case after login.
+
+#### Auth0 backend setup
+
+In the Auth0 dashboard, create an API whose Identifier exactly matches
+`Auth0.plist` → `Audience`. Enable the native client for that API, keep the
+custom URL callback `com.hackhers.runway90://…`, and keep the existing roles
+Action so the ID token carries `https://runway90.app/roles`. The backend checks
+the API access token’s issuer, audience, signature, and `sub` before touching
+Tiger Data. Give teammates separate Auth0 users; never share one user’s token.
+
+After deploying Vercel, set `BackendURL` to the deployed URL ending in `/api`,
+run `xcodegen generate`, and rebuild the IPA. Check
+`https://your-backend.vercel.app/api/health` before uploading.
+
+#### TestFlight sharing
+
+1. In App Store Connect, create an iOS app with bundle ID
+   `com.hackhers.runway90` if it does not already exist.
+2. In Xcode, choose **Any iOS Device (arm64)**, then **Product → Archive**.
+3. In Organizer, select the archive → **Distribute App → App Store Connect →
+   Upload**.
+4. Wait for Apple to process the build. Add teammates under **TestFlight →
+   Internal Testing** if they are App Store Connect users, or **External
+   Testing** if they are not. External testing may require Apple beta review.
+5. Teammates accept the TestFlight invitation, install TestFlight, and open the
+   app. Each person signs into their own Auth0 account; their case is stored
+   under their own Auth0 `sub` in Tiger Data.
+
+Do not upload an archive made while `Secrets.plist` is included in the app
+bundle. The XcodeGen source now explicitly excludes it; verify the archive
+contains no `Secrets.plist` before sharing.
 
 ---
 
@@ -506,10 +540,11 @@ runway90/
     ├── Store/
     │   └── AppStore.swift            # Central @MainActor state store & business logic
     ├── Adapters/
-    │   ├── Secrets.swift             # Configuration reader (Secrets.plist)
+    │   ├── BackendAPI.swift           # Authenticated hosted API client
+    │   ├── Secrets.swift              # Legacy local template reader, never bundled
     │   ├── GeminiAdapter.swift       # Gemini 3.6 Flash vision extraction adapter
     │   ├── BackboardAdapter.swift    # Backboard assistant memory & local JSON sync
-    │   ├── TigerDataAdapter.swift    # Direct TLS PostgreSQL client for Timescale hypertable
+    │   ├── TigerDataAdapter.swift    # Authenticated backend facade for Tiger Data
     │   └── AuthAdapter.swift         # Auth0 Universal Login & demo role switcher
     ├── Views/
     │   ├── DisclosureView.swift      # Synthetic data warning & disclosure screen

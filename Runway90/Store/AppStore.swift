@@ -78,28 +78,45 @@ final class AppStore: ObservableObject {
         state.user.role = .survivor
         state.caseRecord.userId = newSession.subject
 
-        Task { await restoreFromTigerData(for: newSession.subject) }
+        if let accessToken = newSession.accessToken {
+            Task { await restoreFromTigerData(for: newSession.subject, accessToken: accessToken) }
+        } else {
+            persist()
+        }
     }
 
-    private func restoreFromTigerData(for ownerID: String) async {
-        guard TigerDataAdapter.isLive,
-              let remoteState = await TigerDataAdapter.loadSnapshot(ownerID: ownerID)
-        else {
+    private func restoreFromTigerData(for ownerID: String, accessToken: String) async {
+        guard TigerDataAdapter.isLive(accessToken: accessToken) else {
             persist()
             return
         }
 
-        state = remoteState
-        restoredFromMemory = true
-        restoredFromTigerData = true
-        BackboardAdapter.save(state)
+        do {
+            guard let remoteState = try await TigerDataAdapter.loadSnapshot(ownerID: ownerID,
+                                                                              accessToken: accessToken)
+            else {
+                // This is a genuinely new account. Seed it once; a network
+                // error must never overwrite an existing remote case.
+                persist()
+                return
+            }
+
+            state = remoteState
+            restoredFromMemory = true
+            restoredFromTigerData = true
+            BackboardAdapter.save(state)
+        } catch {
+            #if DEBUG
+            print("Tiger Data restore failed; preserving local state: \(error)")
+            #endif
+        }
     }
 
     func appendEvent(type: String, payload: [String: String]) {
         let event = TimelineEvent(id: UUID().uuidString, caseId: state.caseRecord.id,
                                   type: type, timestamp: Date(), payload: payload)
         state.timeline.append(event)
-        TigerDataAdapter.record(event: event)
+        TigerDataAdapter.record(event: event, accessToken: remoteAccessToken)
         persist()
     }
 
@@ -109,7 +126,7 @@ final class AppStore: ObservableObject {
         extracting = true
         pendingFacts = []
         Task {
-            let output = await GeminiAdapter.extract(image: image)
+            let output = await GeminiAdapter.extract(image: image, accessToken: remoteAccessToken)
             let doc = DocumentRecord(id: UUID().uuidString, caseId: state.caseRecord.id,
                                      localAssetName: "maya_collection_letter",
                                      documentType: output.result.documentType,
@@ -221,7 +238,7 @@ final class AppStore: ObservableObject {
     }
 
     func deleteDemoCase() {
-        TigerDataAdapter.deleteSnapshot(ownerID: state.user.id)
+        TigerDataAdapter.deleteSnapshot(ownerID: state.user.id, accessToken: remoteAccessToken)
         BackboardAdapter.deleteAll()
         state = Fixture.fresh()
         restoredFromMemory = false
@@ -235,7 +252,15 @@ final class AppStore: ObservableObject {
     // MARK: - Persistence
 
     func persist() {
-        BackboardAdapter.save(state)
-        TigerDataAdapter.saveSnapshot(state, ownerID: state.user.id)
+        BackboardAdapter.save(state, accessToken: remoteAccessToken)
+        TigerDataAdapter.saveSnapshot(state, ownerID: state.user.id, accessToken: remoteAccessToken)
+    }
+
+    /// Only a live survivor may write a case snapshot. A live advocate gets a
+    /// clean scoped view and must not accidentally create a new advocate-owned
+    /// case in Tiger Data.
+    private var remoteAccessToken: String? {
+        guard session?.role == .survivor else { return nil }
+        return session?.accessToken
     }
 }
