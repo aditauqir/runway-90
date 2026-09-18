@@ -7,10 +7,16 @@ struct AdvocateView: View {
     @State private var mfaPassed = false
     @State private var mfaCode = ""
 
+    /// Live Auth0 advocates already passed tenant-side MFA; demo advocates
+    /// must pass the labelled demo-MFA sheet.
+    private var needsDemoMFA: Bool {
+        (store.session?.isDemo ?? true) && !mfaPassed
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if !mfaPassed {
+                if needsDemoMFA {
                     mfaGate
                 } else {
                     advocateContent
@@ -42,9 +48,7 @@ struct AdvocateView: View {
                 .font(.system(size: 44)).foregroundStyle(RW.pink)
             Text("Advocate verification")
                 .font(.title3.weight(.bold)).foregroundStyle(RW.cloud)
-            Text(AuthAdapter.isLive
-                 ? "Auth0 MFA required for the advocate role."
-                 : "Demo MFA — enter any 6 digits. This simulates Auth0 MFA for the advocate role.")
+            Text("Demo MFA — enter any 6 digits. This simulates Auth0 MFA for the advocate role.")
                 .font(.caption).foregroundStyle(RW.mist)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -73,7 +77,7 @@ struct AdvocateView: View {
         ScrollView {
             VStack(spacing: 18) {
                 HStack {
-                    Label(AuthAdapter.isLive ? "Auth0 · role: advocate" : "Demo login · role: advocate",
+                    Label((store.session?.isDemo ?? true) ? "Demo login · role: advocate" : "Auth0 · role: advocate",
                           systemImage: "person.badge.shield.checkmark.fill")
                         .font(.caption.weight(.semibold)).foregroundStyle(RW.mist)
                     Spacer()

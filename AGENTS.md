@@ -69,9 +69,19 @@ Runway90/
 
 ## Status — TODO (pick up here)
 
-1. **Live Auth0** — add SPM package `https://github.com/auth0/Auth0.swift`, wire
-   `AuthAdapter.loginLive` (web auth, roles claim → `Role`, MFA action for advocate).
-   Keep the demo login fallback; never remove it.
+1. ~~Live Auth0~~ **DONE (2026-09-18)** — Auth0.swift SPM package wired.
+   Tenant `skmpe.us.auth0.com`, client `U7jFSU34Rfu3DJOCIcUzWCWxG08PwgCL`,
+   custom-scheme callback `com.hackhers.runway90://…` (allowlisted on tenant;
+   CFBundleURLTypes set in project.yml). Config in `Resources/Auth0.plist`.
+   `AuthAdapter.loginLive()` does Universal Login and maps the custom claim
+   `https://runway90.app/roles` → Role (no claim = survivor). Live advocate
+   sessions skip the demo-MFA sheet (tenant enforces MFA). Demo login fallback
+   kept, per hard rules. **Tenant-side setup still needed by a human:**
+   create roles `survivor`/`advocate`, assign to test users, and add a
+   post-login Action:
+   `api.idToken.setCustomClaim("https://runway90.app/roles", event.authorization?.roles || [])`
+   plus (optional) an MFA challenge when roles include `advocate`.
+   Needs one on-device end-to-end test (web auth can't run headless).
 2. ~~Live Backboard~~ **DONE (2026-09-18)** — verified live: base
    `https://app.backboard.io/api`, header `X-API-Key`. Adapter creates one
    assistant per case (`POST /assistants`, id cached in UserDefaults as

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Auth0.swift reads this automatically. Custom URL scheme callback mode
+	     (no CallbackMode key) — works without Associated Domains, and the
+	     com.hackhers.runway90:// callback is allowlisted on the tenant. -->
+	<key>ClientId</key>
+	<string>U7jFSU34Rfu3DJOCIcUzWCWxG08PwgCL</string>
+	<key>Domain</key>
+	<string>skmpe.us.auth0.com</string>
+</dict>
+</plist>

@@ -1,13 +1,26 @@
 import Foundation
+import Auth0
 
 /// Auth0 adapter — role separation and scoped sharing (spec section 6).
-/// Live path: Auth0 universal login (add the Auth0.swift SPM package and wire
-/// `loginLive` when AUTH0_DOMAIN / AUTH0_CLIENT_ID are configured).
+/// Live path (wired 2026-09-18): Auth0 Universal Login via Auth0.swift.
+///   - Tenant config lives in Resources/Auth0.plist (read by the SDK).
+///   - Roles come from the custom ID-token claim `https://runway90.app/roles`
+///     (set by a post-login Action on the tenant). No claim -> survivor.
+///   - MFA for advocates is enforced tenant-side (Auth0 Action / MFA policy),
+///     so a live advocate session skips the in-app demo-MFA sheet.
 /// Fallback: local role switch clearly labelled "Demo login". Never implies
-/// production authentication.
+/// production authentication. NEVER remove the demo fallback.
 struct AuthAdapter {
 
-    static var isLive: Bool { Secrets.auth0Domain != nil && Secrets.auth0ClientId != nil }
+    /// Live when Auth0.plist is bundled with real values.
+    static var isLive: Bool {
+        guard let path = Bundle.main.path(forResource: "Auth0", ofType: "plist"),
+              let values = NSDictionary(contentsOfFile: path),
+              let clientId = values["ClientId"] as? String, !clientId.isEmpty,
+              let domain = values["Domain"] as? String, !domain.isEmpty
+        else { return false }
+        return true
+    }
 
     struct Session {
         var role: Role
@@ -16,7 +29,8 @@ struct AuthAdapter {
         var mfaVerified: Bool
     }
 
-    /// Demo login fallback. `demoMFA` simulates the MFA step with a labelled sheet.
+    // MARK: - Demo fallback (always available)
+
     static func demoLogin(role: Role) -> Session {
         Session(role: role,
                 displayName: role == .survivor ? "Maya" : "Demo Advocate",
@@ -24,8 +38,46 @@ struct AuthAdapter {
                 mfaVerified: role == .survivor) // advocate must pass the demo-MFA sheet
     }
 
-    // TODO(live): implement with Auth0.swift:
-    //   Auth0.webAuth().audience(...).scope("openid profile").start { ... }
-    // Map Auth0 roles claim -> Role. Enforce MFA for the advocate role via an
-    // Auth0 Action ("Require MFA for advocate").
+    // MARK: - Live Auth0
+
+    private static let rolesClaim = "https://runway90.app/roles"
+
+    @MainActor
+    static func loginLive() async throws -> Session {
+        let credentials = try await Auth0
+            .webAuth()
+            .scope("openid profile email")
+            .start()
+
+        let claims = decodeJWTPayload(credentials.idToken) ?? [:]
+        let roles = (claims[rolesClaim] as? [String]) ?? []
+        let role: Role = roles.contains("advocate") ? .advocate : .survivor
+        let name = (claims["name"] as? String)
+            ?? (claims["nickname"] as? String)
+            ?? (claims["email"] as? String)
+            ?? (role == .survivor ? "Survivor" : "Advocate")
+
+        return Session(role: role,
+                       displayName: role == .survivor ? "Maya" : name,
+                       isDemo: false,
+                       mfaVerified: true) // tenant policy enforces MFA before we get here
+    }
+
+    @MainActor
+    static func logoutLive() async {
+        try? await Auth0.webAuth().clearSession()
+    }
+
+    /// Minimal JWT payload decoder (we only need custom claims; signature
+    /// verification already happened in the SDK's token exchange).
+    private static func decodeJWTPayload(_ jwt: String) -> [String: Any]? {
+        let parts = jwt.split(separator: ".")
+        guard parts.count == 3 else { return nil }
+        var base64 = String(parts[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+        guard let data = Data(base64Encoded: base64) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
 }

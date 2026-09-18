@@ -7,12 +7,15 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.10"
-    DEVELOPMENT_TEAM: ""     # set your Apple ID team in Xcode > Signing & Capabilities
+    DEVELOPMENT_TEAM: "L22992699P"
     CODE_SIGN_STYLE: Automatic
 packages:
   PostgresClientKit:
     url: https://github.com/codewinsdotcom/PostgresClientKit
     from: 1.5.0
+  Auth0:
+    url: https://github.com/auth0/Auth0.swift
+    from: 2.22.0
 targets:
   Runway90:
     type: application
@@ -21,6 +24,7 @@ targets:
       - path: Runway90
     dependencies:
       - package: PostgresClientKit
+      - package: Auth0
     info:
       path: Runway90/Info.plist
       properties:
@@ -30,6 +34,11 @@ targets:
         NSCameraUsageDescription: "Used only to capture a demo document. No real documents are stored."
         NSPhotoLibraryUsageDescription: "Used only to pick the bundled synthetic demo letter."
         ITSAppUsesNonExemptEncryption: false
+        # Auth0 custom-scheme callback (matches the allowlisted
+        # com.hackhers.runway90://skmpe.us.auth0.com/ios/... URLs)
+        CFBundleURLTypes:
+          - CFBundleURLName: auth0
+            CFBundleURLSchemes: [com.hackhers.runway90]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hackhers.runway90

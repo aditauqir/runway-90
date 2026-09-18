@@ -16,6 +16,8 @@
 		557BDB64408EA306FC4B5F25 /* ReclaimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2727E32D3E008E4BF839D8A5 /* ReclaimView.swift */; };
 		563EB7F8715724298BEC0933 /* GeminiAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AB8CE9FC67D6A697C4ECB8 /* GeminiAdapter.swift */; };
 		627CE9089A3DC85AA9D09CE1 /* SurvivorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */; };
+		630727A9AD5AD5EFA6FEA9EA /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = 3D5D005B541FB1E732F65BA9 /* Auth0 */; };
+		8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */ = {isa = PBXBuildFile; fileRef = 94CC7D10685938D60AC3274C /* Auth0.plist */; };
 		9A16DDB46D9BE631872489CD /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE719B53DEEBF2AFD20F079A /* Secrets.swift */; };
 		9C2995F6FB04C8C2206482C3 /* RunwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20886633F97D8372E36062B9 /* RunwayView.swift */; };
 		A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */ = {isa = PBXBuildFile; productRef = 94A3D79C98BF1B067F9F6350 /* PostgresClientKit */; };
@@ -45,6 +47,7 @@
 		76C552B624E0BC0CB5927742 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurvivorHomeView.swift; sourceTree = "<group>"; };
 		8D690F990841F6AE7363A8A1 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		94CC7D10685938D60AC3274C /* Auth0.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Auth0.plist; sourceTree = "<group>"; };
 		A5FA338DCD263BACDD254CFE /* AdvocateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvocateView.swift; sourceTree = "<group>"; };
 		D4780487D7F98E485A2173AA /* Runway90App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runway90App.swift; sourceTree = "<group>"; };
 		D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.example.plist; sourceTree = "<group>"; };
@@ -61,6 +64,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A01CB13D9DD3FD8F5C6E9F8A /* PostgresClientKit in Frameworks */,
+				630727A9AD5AD5EFA6FEA9EA /* Auth0 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,6 +74,7 @@
 		06149C1841C8A092AE6AFBB0 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				94CC7D10685938D60AC3274C /* Auth0.plist */,
 				D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */,
 				EE87782080672EF9DEC0FED6 /* Secrets.plist */,
 			);
@@ -185,6 +190,7 @@
 			name = Runway90;
 			packageProductDependencies = (
 				94A3D79C98BF1B067F9F6350 /* PostgresClientKit */,
+				3D5D005B541FB1E732F65BA9 /* Auth0 */,
 			);
 			productName = Runway90;
 			productReference = 61898C006F5E4A98EF7E2952 /* Runway90.app */;
@@ -200,7 +206,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					F33CC0D53ED4C5F242A56D60 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = L22992699P;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -215,6 +221,7 @@
 			mainGroup = 523A7C09A5A887D68EE6EC2D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				30ACE995E5CD7D8FCB184BE0 /* XCRemoteSwiftPackageReference "Auth0.swift" */,
 				49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -232,6 +239,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */,
 				A2895C09395B087D6E63CA77 /* Secrets.example.plist in Resources */,
 				C08B423395277E0695141BA9 /* Secrets.plist in Resources */,
 			);
@@ -338,7 +346,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L22992699P;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -396,7 +404,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L22992699P;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -449,6 +457,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		30ACE995E5CD7D8FCB184BE0 /* XCRemoteSwiftPackageReference "Auth0.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/auth0/Auth0.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.22.0;
+			};
+		};
 		49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/codewinsdotcom/PostgresClientKit";
@@ -460,6 +476,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		3D5D005B541FB1E732F65BA9 /* Auth0 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30ACE995E5CD7D8FCB184BE0 /* XCRemoteSwiftPackageReference "Auth0.swift" */;
+			productName = Auth0;
+		};
 		94A3D79C98BF1B067F9F6350 /* PostgresClientKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 49D17589BB66668B7252B950 /* XCRemoteSwiftPackageReference "PostgresClientKit" */;

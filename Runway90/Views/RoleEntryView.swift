@@ -4,6 +4,8 @@ import SwiftUI
 /// Uses Auth0 when configured, otherwise a clearly labelled local demo login.
 struct RoleEntryView: View {
     @EnvironmentObject var store: AppStore
+    @State private var loginError: String?
+    @State private var loggingIn = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -28,6 +30,28 @@ struct RoleEntryView: View {
             }
 
             VStack(spacing: 16) {
+                if AuthAdapter.isLive {
+                    Button {
+                        Task { await liveLogin() }
+                    } label: {
+                        roleRow(icon: "key.horizontal.fill",
+                                title: loggingIn ? "Signing in…" : "Log in with Auth0",
+                                subtitle: "Universal Login · role from your account")
+                    }
+                    .rwPrimaryButton()
+                    .disabled(loggingIn)
+
+                    if let loginError {
+                        Text(loginError)
+                            .font(.caption)
+                            .foregroundStyle(RW.pink)
+                            .multilineTextAlignment(.center)
+                    }
+
+                    Text("Or use the local demo roles (labelled Demo login):")
+                        .font(.caption2)
+                        .foregroundStyle(RW.mist.opacity(0.8))
+                }
                 Button {
                     store.session = AuthAdapter.demoLogin(role: .survivor)
                     store.route = .survivor
@@ -52,6 +76,20 @@ struct RoleEntryView: View {
                 .padding(.bottom, 16)
         }
         .rwScreen()
+    }
+
+    @MainActor
+    private func liveLogin() async {
+        loggingIn = true
+        loginError = nil
+        do {
+            let session = try await AuthAdapter.loginLive()
+            store.session = session
+            store.route = session.role == .advocate ? .advocate : .survivor
+        } catch {
+            loginError = "Auth0 login failed: \(error.localizedDescription)"
+        }
+        loggingIn = false
     }
 
     private func roleRow(icon: String, title: String, subtitle: String) -> some View {
