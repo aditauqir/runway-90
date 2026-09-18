@@ -1,0 +1,31 @@
+name: Runway90
+options:
+  bundleIdPrefix: com.hackhers
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    DEVELOPMENT_TEAM: ""     # set your Apple ID team in Xcode > Signing & Capabilities
+    CODE_SIGN_STYLE: Automatic
+targets:
+  Runway90:
+    type: application
+    platform: iOS
+    sources:
+      - path: Runway90
+    info:
+      path: Runway90/Info.plist
+      properties:
+        CFBundleDisplayName: Runway 90
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSCameraUsageDescription: "Used only to capture a demo document. No real documents are stored."
+        NSPhotoLibraryUsageDescription: "Used only to pick the bundled synthetic demo letter."
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hackhers.runway90
+        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
+        TARGETED_DEVICE_FAMILY: "1"

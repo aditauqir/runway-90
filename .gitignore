@@ -1,0 +1,14 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# Generated project (recreate with `xcodegen generate`)
+# Runway90.xcodeproj  <- keep committed for hackathon convenience
+
+# Secrets — never commit real keys
+Runway90/Resources/Secrets.plist
+
+.DS_Store
