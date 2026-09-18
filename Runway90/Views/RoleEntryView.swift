@@ -39,9 +39,6 @@ struct RoleEntryView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .ignoresSafeArea(edges: .bottom)
-        .task {
-            await store.checkPreviousSession()
-        }
         .sheet(isPresented: $showingDemoAuth) {
             DemoAuthSheet(mode: demoAuthMode) { session in
                 showingDemoAuth = false
@@ -62,22 +59,12 @@ struct RoleEntryView: View {
                     .background(RW.raspberry.opacity(0.9), in: Capsule())
             }
 
-            if store.checkingPreviousSession {
-                ProgressView()
-                    .tint(.white)
-                    .frame(height: 54)
-            } else if let previousSession = store.previousSession {
-                AuthEntryButton(title: "Welcome back, \(previousSession.displayName)", prominent: true) {
-                    store.startSession(previousSession)
-                }
-
-                AuthEntryButton(title: "Log in with Auth0", prominent: false) {
-                    beginLogin()
-                }
-            } else {
-                AuthEntryButton(title: "Log in", prominent: true) {
-                    beginLogin()
-                }
+            AuthEntryButton(
+                title: loggingIn ? "Signing in…" : "Log in",
+                prominent: true,
+                isLoading: loggingIn
+            ) {
+                beginLogin()
             }
 
             AuthEntryButton(
@@ -204,38 +191,46 @@ struct RoleEntryView: View {
 private struct AuthEntryButton: View {
     let title: String
     let prominent: Bool
+    var isLoading: Bool = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Capsule()
-                                .fill((prominent ? RW.raspberry : Color.white)
-                                    .opacity(prominent ? 0.74 : 0.16))
-                        )
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.64), Color.white.opacity(0.2)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
-                )
-                .shadow(color: (prominent ? RW.raspberry : Color.black).opacity(0.28), radius: 12, y: 6)
+            HStack(spacing: 8) {
+                if isLoading {
+                    ProgressView()
+                        .tint(.white)
+                }
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule()
+                            .fill((prominent ? RW.raspberry : Color.white)
+                                .opacity(prominent ? 0.74 : 0.16))
+                    )
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.64), Color.white.opacity(0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .shadow(color: (prominent ? RW.raspberry : Color.black).opacity(0.28), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
+        .disabled(isLoading)
     }
 }
 
@@ -251,7 +246,7 @@ private struct DemoAuthSheet: View {
     init(mode: DemoAuthMode, onComplete: @escaping (AuthAdapter.Session) -> Void) {
         self.mode = mode
         self.onComplete = onComplete
-        _displayName = State(initialValue: "Isabel")
+        _displayName = State(initialValue: "Maya")
         _email = State(initialValue: "skmpe15@gmail.com")
     }
 

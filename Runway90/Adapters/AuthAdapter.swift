@@ -118,6 +118,11 @@ struct AuthAdapter {
         UserDefaults.standard.removeObject(forKey: demoSessionKey)
     }
 
+    static func clearCredentials() {
+        _ = credentialsManager.clear()
+        clearDemoLogin()
+    }
+
     // MARK: - Live Auth0
 
     private static let rolesClaim = "https://runway90.app/roles"

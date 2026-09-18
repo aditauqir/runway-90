@@ -319,8 +319,8 @@ final class AppStore: ObservableObject {
         restoredFromTigerData = false
         session = nil
         previousSession = nil
-        checkingPreviousSession = true
-        AuthAdapter.clearDemoLogin()
+        checkingPreviousSession = false
+        AuthAdapter.clearCredentials()
         pendingFacts = []
         route = .disclosure
         BackboardAdapter.save(state)
