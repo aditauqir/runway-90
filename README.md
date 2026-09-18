@@ -29,6 +29,9 @@
 
 > ℹ️ **Team & Collaborator Note:** Detailed hackathon track targets, sponsor prize rubrics, presentation scripts, and backend wire contracts are documented separately in [**`README_TEAM.md`**](README_TEAM.md).
 
+> 🧭 **Onboarding handoff:** The detailed implementation brief for the next
+> agent is [**`docs/ONBOARDING_AGENT_PROMPT.md`**](docs/ONBOARDING_AGENT_PROMPT.md).
+
 ---
 
 ## Table of Contents

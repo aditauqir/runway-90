@@ -15,6 +15,8 @@ final class AppStore: ObservableObject {
     @Published var route: Route = .disclosure
     @Published var state: CaseState
     @Published var session: AuthAdapter.Session?
+    @Published var previousSession: AuthAdapter.Session?
+    @Published var checkingPreviousSession = true
 
     // Extraction flow
     @Published var extracting = false
@@ -51,7 +53,10 @@ final class AppStore: ObservableObject {
     // MARK: - Events
 
     func startSession(_ newSession: AuthAdapter.Session) {
+        AuthAdapter.rememberDemoLogin(newSession)
         session = newSession
+        previousSession = nil
+        checkingPreviousSession = false
         route = newSession.role == .advocate ? .advocate : .survivor
         restoredFromTigerData = false
 
@@ -225,7 +230,13 @@ final class AppStore: ObservableObject {
 
     func logout() {
         let hadLiveSession = session?.isDemo == false
+        let hadDemoSession = session?.isDemo == true
         session = nil
+        previousSession = nil
+        checkingPreviousSession = true
+        if hadDemoSession {
+            AuthAdapter.clearDemoLogin()
+        }
         route = .roleEntry
 
         if hadLiveSession {
@@ -244,9 +255,29 @@ final class AppStore: ObservableObject {
         restoredFromMemory = false
         restoredFromTigerData = false
         session = nil
+        previousSession = nil
+        checkingPreviousSession = true
+        AuthAdapter.clearDemoLogin()
         pendingFacts = []
         route = .disclosure
         BackboardAdapter.save(state)
+    }
+
+    // MARK: - Entry screen authentication state
+
+    /// Checks secure Auth0 credentials first, then the local labelled demo
+    /// session. This lets a returning user see a resume button without
+    /// silently routing into the case before they choose it.
+    func checkPreviousSession() async {
+        checkingPreviousSession = true
+        if let liveSession = await AuthAdapter.restoreSession() {
+            previousSession = liveSession
+        } else if AuthAdapter.hasPreviousDemoLogin {
+            previousSession = AuthAdapter.demoLogin(role: .survivor)
+        } else {
+            previousSession = nil
+        }
+        checkingPreviousSession = false
     }
 
     // MARK: - Persistence

@@ -65,7 +65,7 @@ struct QuickExitButton: View {
 
 struct SyntheticBanner: View {
     var body: some View {
-        Text("Synthetic demo data. No real financial accounts, survivors, advocates, or organisations are represented.")
+        Text("Contents produced are for demo only.")
             .font(.caption2)
             .foregroundStyle(RW.cloud.opacity(0.7))
             .multilineTextAlignment(.center)

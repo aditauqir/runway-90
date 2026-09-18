@@ -12,6 +12,16 @@ import Auth0
 /// production authentication. NEVER remove the demo fallback.
 struct AuthAdapter {
 
+    private static let demoAccountKey = "runway90.demo.auth.account"
+    private static let demoSessionKey = "runway90.demo.auth.session"
+    private static let credentialsManager = CredentialsManager(authentication: Auth0.authentication())
+
+    private struct DemoAccount {
+        let displayName: String
+        let email: String
+        let subject: String
+    }
+
     /// Live when Auth0.plist is bundled with real values.
     static var isLive: Bool {
         guard let path = Bundle.main.path(forResource: "Auth0", ofType: "plist"),
@@ -19,6 +29,18 @@ struct AuthAdapter {
               let clientId = values["ClientId"] as? String, !clientId.isEmpty,
               let domain = values["Domain"] as? String, !domain.isEmpty
         else { return false }
+        return true
+    }
+
+    /// The app can only use the live Auth0/Tiger/Gemini path once the public
+    /// API audience and backend URL have been filled in. Until then, the
+    /// entry screen deliberately uses the labelled Maya demo flow.
+    static var hasLiveAPIConfiguration: Bool {
+        guard isLive,
+              let audience = apiAudience,
+              let backendURL = backendURL,
+              !audience.contains("YOUR_"),
+              !backendURL.contains("YOUR_") else { return false }
         return true
     }
 
@@ -36,21 +58,58 @@ struct AuthAdapter {
 
     enum AuthError: LocalizedError {
         case missingSubject
+        case failedToStoreCredentials
 
         var errorDescription: String? {
-            "Auth0 did not return a stable user identifier."
+            switch self {
+            case .missingSubject:
+                return "Auth0 did not return a stable user identifier."
+            case .failedToStoreCredentials:
+                return "The Auth0 session could not be saved securely on this device."
+            }
         }
     }
 
     // MARK: - Demo fallback (always available)
 
     static func demoLogin(role: Role) -> Session {
-        Session(role: role,
-                displayName: role == .survivor ? "Maya" : "Demo Advocate",
-                isDemo: true,
-                mfaVerified: role == .survivor, // advocate must pass the demo-MFA sheet
-                accessToken: nil,
-                subject: role == .survivor ? "demo-maya-001" : "demo-advocate-001")
+        let account = storedDemoAccount()
+        return Session(role: role,
+                       displayName: role == .survivor ? account.displayName : "Demo Advocate",
+                       isDemo: true,
+                       mfaVerified: role == .survivor, // advocate must pass the demo-MFA sheet
+                       accessToken: nil,
+                       subject: role == .survivor ? account.subject : "demo-advocate-001")
+    }
+
+    static var hasPreviousDemoLogin: Bool {
+        UserDefaults.standard.bool(forKey: demoSessionKey)
+    }
+
+    static func demoCreateAccount(displayName: String, email: String) -> Session {
+        let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeName = name.isEmpty ? "Maya" : name
+        let safeEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let account = DemoAccount(displayName: safeName,
+                                  email: safeEmail.isEmpty ? "maya.demo@runway90.invalid" : safeEmail,
+                                  subject: "demo-\(UUID().uuidString.lowercased())")
+        storeDemoAccount(account)
+        UserDefaults.standard.set(true, forKey: demoSessionKey)
+        return Session(role: .survivor,
+                       displayName: account.displayName,
+                       isDemo: true,
+                       mfaVerified: true,
+                       accessToken: nil,
+                       subject: account.subject)
+    }
+
+    static func rememberDemoLogin(_ session: Session) {
+        guard session.isDemo, session.role == .survivor else { return }
+        UserDefaults.standard.set(true, forKey: demoSessionKey)
+    }
+
+    static func clearDemoLogin() {
+        UserDefaults.standard.removeObject(forKey: demoSessionKey)
     }
 
     // MARK: - Live Auth0
@@ -58,11 +117,35 @@ struct AuthAdapter {
     private static let rolesClaim = "https://runway90.app/roles"
 
     @MainActor
-    static func loginLive() async throws -> Session {
+    static func loginLive(createAccount: Bool = false) async throws -> Session {
         let webAuth = apiAudience.map { Auth0.webAuth().audience($0) } ?? Auth0.webAuth()
-        let credentials = try await webAuth
-            .scope("openid profile email")
-            .start()
+        var request = webAuth.scope("openid profile email offline_access")
+        if createAccount {
+            request = request.parameters(["screen_hint": "signup"])
+        }
+        let credentials = try await request.start()
+
+        guard credentialsManager.store(credentials: credentials) else {
+            throw AuthError.failedToStoreCredentials
+        }
+
+        return try session(from: credentials)
+    }
+
+    /// Rehydrates a previous Auth0 session from the SDK's Keychain store.
+    /// Auth0.swift renews the access token when a refresh token is available.
+    @MainActor
+    static func restoreSession() async -> Session? {
+        guard isLive else { return nil }
+        do {
+            let credentials = try await credentialsManager.credentials()
+            return try session(from: credentials)
+        } catch {
+            return nil
+        }
+    }
+
+    private static func session(from credentials: Credentials) throws -> Session {
 
         let claims = decodeJWTPayload(credentials.idToken) ?? [:]
         guard let subject = claims["sub"] as? String, !subject.isEmpty else {
@@ -86,6 +169,7 @@ struct AuthAdapter {
     @MainActor
     static func logoutLive() async {
         try? await Auth0.webAuth().clearSession()
+        _ = credentialsManager.clear()
     }
 
     private static var apiAudience: String? {
@@ -95,6 +179,34 @@ struct AuthAdapter {
               !audience.isEmpty,
               !audience.contains("YOUR_") else { return nil }
         return audience
+    }
+
+    private static var backendURL: String? {
+        guard let path = Bundle.main.path(forResource: "Auth0", ofType: "plist"),
+              let values = NSDictionary(contentsOfFile: path),
+              let backendURL = values["BackendURL"] as? String,
+              !backendURL.isEmpty else { return nil }
+        return backendURL
+    }
+
+    private static func storedDemoAccount() -> DemoAccount {
+        guard let values = UserDefaults.standard.dictionary(forKey: demoAccountKey),
+              let displayName = values["displayName"] as? String,
+              let email = values["email"] as? String,
+              let subject = values["subject"] as? String else {
+            return DemoAccount(displayName: "Maya",
+                               email: "maya.demo@runway90.invalid",
+                               subject: "demo-maya-001")
+        }
+        return DemoAccount(displayName: displayName, email: email, subject: subject)
+    }
+
+    private static func storeDemoAccount(_ account: DemoAccount) {
+        UserDefaults.standard.set([
+            "displayName": account.displayName,
+            "email": account.email,
+            "subject": account.subject
+        ], forKey: demoAccountKey)
     }
 
     /// Minimal JWT payload decoder (we only need custom claims; signature

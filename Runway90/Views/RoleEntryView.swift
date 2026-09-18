@@ -1,186 +1,154 @@
 import SwiftUI
 
-/// Login & Role Entry screen with Apple Liquid Glass aesthetic.
+private enum DemoAuthMode {
+    case login
+    case createAccount
+}
+
+/// Entry screen for the live Auth0 path and the labelled local demo path.
 struct RoleEntryView: View {
     @EnvironmentObject var store: AppStore
     @State private var loginError: String?
     @State private var loggingIn = false
+    @State private var showingDemoAuth = false
+    @State private var demoAuthMode: DemoAuthMode = .login
 
     var body: some View {
         ZStack {
-            // MARK: - Center Flight Icon (exactly 30px above center mid)
-            VStack {
-                Spacer()
-                flightBadge
-                    .offset(y: -30)
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            loginBackground
 
-            // MARK: - Top & Bottom Overlay Controls
             VStack(spacing: 0) {
-                // Top safety exit
-                HStack {
-                    Spacer()
-                    QuickExitButton()
+                // Centered plain-text safety control. It intentionally has no
+                // icon, capsule, material, or border competing with the UI.
+                Button("Exit") {
+                    store.quickExit()
                 }
-                .padding(.horizontal, 20)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.92))
+                .buttonStyle(.plain)
                 .padding(.top, 12)
 
                 Spacer()
 
-                // Bottom Controls
-                VStack(spacing: 12) {
-                    if let loginError {
-                        Text(loginError)
-                            .font(.caption)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(RW.raspberry.opacity(0.9), in: Capsule())
-                            .multilineTextAlignment(.center)
-                    }
+                flightBadge
 
-                    // Button 1: Log in
-                    Button {
-                        if AuthAdapter.isLive {
-                            Task { await liveLogin() }
-                        } else {
-                            store.startSession(AuthAdapter.demoLogin(role: .survivor))
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            if loggingIn {
-                                ProgressView()
-                                    .tint(.white)
-                            }
-                            Text(loggingIn ? "Signing in…" : "Log in")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(Color.white)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 54)
-                        .background(
-                            Capsule()
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    Capsule()
-                                        .fill(RW.raspberry.opacity(0.7))
-                                )
-                                .overlay(
-                                    Capsule()
-                                        .strokeBorder(
-                                            LinearGradient(
-                                                colors: [Color.white.opacity(0.65), Color.white.opacity(0.2)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            ),
-                                            lineWidth: 1
-                                        )
-                                )
-                        )
-                        .shadow(color: RW.raspberry.opacity(0.35), radius: 12, y: 6)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(loggingIn)
+                Spacer()
 
-                    // Button 2: Welcome back <user>
-                    Button {
-                        store.startSession(AuthAdapter.demoLogin(role: .survivor))
-                    } label: {
-                        Text("Welcome back, \(store.state.user.displayName)")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Color.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 54)
-                            .background(
-                                Capsule()
-                                    .fill(.ultraThinMaterial)
-                                    .overlay(
-                                        Capsule()
-                                            .fill(Color.white.opacity(0.15))
-                                    )
-                                    .overlay(
-                                        Capsule()
-                                            .strokeBorder(
-                                                LinearGradient(
-                                                    colors: [Color.white.opacity(0.55), Color.white.opacity(0.18)],
-                                                    startPoint: .topLeading,
-                                                    endPoint: .bottomTrailing
-                                                ),
-                                                lineWidth: 1
-                                            )
-                                    )
-                            )
-                            .shadow(color: Color.black.opacity(0.18), radius: 12, y: 6)
-                    }
-                    .buttonStyle(.plain)
-
-                    // Small Plain Text Link: "I'm a demo advocate"
-                    Button {
-                        store.startSession(AuthAdapter.demoLogin(role: .advocate))
-                    } label: {
-                        Text("I’m a demo advocate")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(Color.white.opacity(0.85))
-                            .padding(.top, 4)
-                            .padding(.bottom, 2)
-                    }
-                    .buttonStyle(.plain)
-
-                    SyntheticBanner()
-                        .padding(.top, 2)
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 20)
+                bottomControls
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            GeometryReader { geo in
-                ZStack {
-                    if let uiImg = UIImage(named: "login_bg") ?? (Bundle.main.path(forResource: "login_bg", ofType: "jpg").flatMap { UIImage(contentsOfFile: $0) }) {
-                        Image(uiImage: uiImg)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .clipped()
-                    } else {
-                        RW.gradient
-                    }
-
-                    // Ambient contrast scrim
-                    LinearGradient(
-                        stops: [
-                            .init(color: Color.black.opacity(0.25), location: 0.0),
-                            .init(color: Color.black.opacity(0.04), location: 0.35),
-                            .init(color: Color.black.opacity(0.18), location: 0.65),
-                            .init(color: Color.black.opacity(0.55), location: 1.0)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                }
-                .frame(width: geo.size.width, height: geo.size.height)
-                .clipped()
-                .ignoresSafeArea()
+        .ignoresSafeArea(edges: .bottom)
+        .task {
+            await store.checkPreviousSession()
+        }
+        .sheet(isPresented: $showingDemoAuth) {
+            DemoAuthSheet(mode: demoAuthMode) { session in
+                showingDemoAuth = false
+                store.startSession(session)
             }
-            .ignoresSafeArea()
         }
     }
 
-    // MARK: - Flight Icon Badge
+    private var bottomControls: some View {
+        VStack(spacing: 12) {
+            if let loginError {
+                Text(loginError)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(RW.raspberry.opacity(0.9), in: Capsule())
+            }
+
+            if store.checkingPreviousSession {
+                ProgressView()
+                    .tint(.white)
+                    .frame(height: 54)
+            } else if let previousSession = store.previousSession {
+                AuthEntryButton(title: "Welcome back, \(previousSession.displayName)", prominent: true) {
+                    store.startSession(previousSession)
+                }
+
+                AuthEntryButton(title: "Log in with Auth0", prominent: false) {
+                    beginLogin()
+                }
+            } else {
+                AuthEntryButton(title: "Log in", prominent: true) {
+                    beginLogin()
+                }
+            }
+
+            AuthEntryButton(
+                title: AuthAdapter.hasLiveAPIConfiguration ? "Create account" : "Create demo account",
+                prominent: false
+            ) {
+                beginCreateAccount()
+            }
+
+            Button {
+                store.startSession(AuthAdapter.demoLogin(role: .advocate))
+            } label: {
+                Text("I’m a demo advocate")
+                    .font(.footnote)
+                    .foregroundStyle(Color.white.opacity(0.86))
+            }
+            .buttonStyle(.plain)
+
+            Text(AuthAdapter.hasLiveAPIConfiguration ? "Auth0 Universal Login" : "Demo Auth0 · Maya account")
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(Color.white.opacity(0.74))
+                .padding(.top, 2)
+
+            Text("Contents produced are for demo only.")
+                .font(.caption2)
+                .foregroundStyle(Color.white.opacity(0.72))
+                .multilineTextAlignment(.center)
+                .padding(.top, 2)
+        }
+        .padding(.horizontal, 24)
+        .padding(.bottom, 20)
+    }
+
+    private var loginBackground: some View {
+        GeometryReader { geo in
+            ZStack {
+                if let uiImage = UIImage(named: "login_bg")
+                    ?? Bundle.main.path(forResource: "login_bg", ofType: "png")
+                        .flatMap({ UIImage(contentsOfFile: $0) }) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                } else {
+                    RW.gradient
+                }
+
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.black.opacity(0.22), location: 0.0),
+                        .init(color: Color.black.opacity(0.02), location: 0.42),
+                        .init(color: Color.black.opacity(0.12), location: 0.68),
+                        .init(color: Color.black.opacity(0.48), location: 1.0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+        }
+        .ignoresSafeArea()
+    }
 
     private var flightBadge: some View {
         ZStack {
             Circle()
                 .fill(.ultraThinMaterial)
                 .frame(width: 84, height: 84)
-                .overlay(
-                    Circle()
-                        .fill(Color.white.opacity(0.1))
-                )
+                .overlay(Circle().fill(Color.white.opacity(0.1)))
                 .overlay(
                     Circle()
                         .strokeBorder(
@@ -196,22 +164,154 @@ struct RoleEntryView: View {
 
             Image(systemName: "airplane.departure")
                 .font(.system(size: 38, weight: .semibold))
-                .foregroundStyle(Color.white)
+                .foregroundStyle(.white)
         }
     }
 
-    // MARK: - Actions
+    private func beginLogin() {
+        loginError = nil
+        if AuthAdapter.hasLiveAPIConfiguration {
+            Task { await liveLogin(createAccount: false) }
+        } else {
+            demoAuthMode = .login
+            showingDemoAuth = true
+        }
+    }
+
+    private func beginCreateAccount() {
+        loginError = nil
+        if AuthAdapter.hasLiveAPIConfiguration {
+            Task { await liveLogin(createAccount: true) }
+        } else {
+            demoAuthMode = .createAccount
+            showingDemoAuth = true
+        }
+    }
 
     @MainActor
-    private func liveLogin() async {
+    private func liveLogin(createAccount: Bool) async {
         loggingIn = true
-        loginError = nil
+        defer { loggingIn = false }
         do {
-            let session = try await AuthAdapter.loginLive()
+            let session = try await AuthAdapter.loginLive(createAccount: createAccount)
             store.startSession(session)
         } catch {
             loginError = "Auth0 login failed: \(error.localizedDescription)"
         }
-        loggingIn = false
+    }
+}
+
+private struct AuthEntryButton: View {
+    let title: String
+    let prominent: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            Capsule()
+                                .fill((prominent ? RW.raspberry : Color.white)
+                                    .opacity(prominent ? 0.74 : 0.16))
+                        )
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.64), Color.white.opacity(0.2)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+                .shadow(color: (prominent ? RW.raspberry : Color.black).opacity(0.28), radius: 12, y: 6)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct DemoAuthSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let mode: DemoAuthMode
+    let onComplete: (AuthAdapter.Session) -> Void
+
+    @State private var displayName: String
+    @State private var email: String
+    @State private var password = "runway90-demo"
+
+    init(mode: DemoAuthMode, onComplete: @escaping (AuthAdapter.Session) -> Void) {
+        self.mode = mode
+        self.onComplete = onComplete
+        _displayName = State(initialValue: "Maya")
+        _email = State(initialValue: "maya.demo@runway90.invalid")
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: mode == .login ? "person.crop.circle.badge.checkmark" : "person.badge.plus")
+                    .font(.system(size: 44))
+                    .foregroundStyle(RW.pink)
+
+                Text(mode == .login ? "Demo Auth0 login" : "Create a demo account")
+                    .font(.title2.weight(.bold))
+
+                Text(mode == .login
+                     ? "This local demo uses a fictional Maya account. No password is stored or sent anywhere."
+                     : "This creates a fictional local account so the next launch can show the new name as a returning user.")
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+
+                if mode == .createAccount {
+                    TextField("Name", text: $displayName)
+                        .textContentType(.name)
+                }
+
+                TextField("Email", text: $email)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+
+                SecureField("Demo password", text: $password)
+                    .textContentType(.password)
+
+                Button {
+                    if mode == .createAccount {
+                        onComplete(AuthAdapter.demoCreateAccount(displayName: displayName, email: email))
+                    } else {
+                        onComplete(AuthAdapter.demoLogin(role: .survivor))
+                    }
+                } label: {
+                    Text(mode == .login ? "Continue as Maya" : "Create account")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                }
+                .rwPrimaryButton()
+
+                Text("Contents produced are for demo only.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(24)
+            .navigationTitle("Runway 90")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
