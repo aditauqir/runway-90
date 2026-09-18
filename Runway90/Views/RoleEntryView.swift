@@ -53,16 +53,14 @@ struct RoleEntryView: View {
                         .foregroundStyle(RW.mist.opacity(0.8))
                 }
                 Button {
-                    store.session = AuthAdapter.demoLogin(role: .survivor)
-                    store.route = .survivor
+                    store.startSession(AuthAdapter.demoLogin(role: .survivor))
                 } label: {
                     roleRow(icon: "person.fill", title: "Maya", subtitle: "Survivor · case day 6")
                 }
                 .rwPrimaryButton()
 
                 Button {
-                    store.session = AuthAdapter.demoLogin(role: .advocate)
-                    store.route = .advocate
+                    store.startSession(AuthAdapter.demoLogin(role: .advocate))
                 } label: {
                     roleRow(icon: "person.badge.shield.checkmark.fill",
                             title: "Demo Advocate", subtitle: "Sees only what Maya shares")
@@ -84,8 +82,7 @@ struct RoleEntryView: View {
         loginError = nil
         do {
             let session = try await AuthAdapter.loginLive()
-            store.session = session
-            store.route = session.role == .advocate ? .advocate : .survivor
+            store.startSession(session)
         } catch {
             loginError = "Auth0 login failed: \(error.localizedDescription)"
         }

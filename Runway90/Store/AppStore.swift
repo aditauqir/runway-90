@@ -23,6 +23,7 @@ final class AppStore: ObservableObject {
 
     // Was the app state restored from persistence? (proves Backboard memory beat)
     @Published var restoredFromMemory: Bool
+    @Published var restoredFromTigerData = false
 
     init() {
         if let saved = BackboardAdapter.load() {
@@ -48,6 +49,51 @@ final class AppStore: ObservableObject {
     }
 
     // MARK: - Events
+
+    func startSession(_ newSession: AuthAdapter.Session) {
+        session = newSession
+        route = newSession.role == .advocate ? .advocate : .survivor
+        restoredFromTigerData = false
+
+        // A live advocate must never inherit a survivor's local case from the
+        // same device. The demo advocate intentionally keeps the current
+        // synthetic case so the five-beat presentation remains seamless.
+        if newSession.role == .advocate {
+            if !newSession.isDemo {
+                state = Fixture.fresh()
+                restoredFromMemory = false
+            }
+            return
+        }
+
+        // Keep same-owner local state for fast UI, but never show one user's
+        // local case while another authenticated survivor is restoring.
+        if state.user.id != newSession.subject {
+            state = Fixture.fresh()
+            restoredFromMemory = false
+        }
+
+        state.user.id = newSession.subject
+        state.user.displayName = newSession.displayName
+        state.user.role = .survivor
+        state.caseRecord.userId = newSession.subject
+
+        Task { await restoreFromTigerData(for: newSession.subject) }
+    }
+
+    private func restoreFromTigerData(for ownerID: String) async {
+        guard TigerDataAdapter.isLive,
+              let remoteState = await TigerDataAdapter.loadSnapshot(ownerID: ownerID)
+        else {
+            persist()
+            return
+        }
+
+        state = remoteState
+        restoredFromMemory = true
+        restoredFromTigerData = true
+        BackboardAdapter.save(state)
+    }
 
     func appendEvent(type: String, payload: [String: String]) {
         let event = TimelineEvent(id: UUID().uuidString, caseId: state.caseRecord.id,
@@ -160,14 +206,26 @@ final class AppStore: ObservableObject {
 
     // MARK: - Safety
 
+    func logout() {
+        let hadLiveSession = session?.isDemo == false
+        session = nil
+        route = .roleEntry
+
+        if hadLiveSession {
+            Task { await AuthAdapter.logoutLive() }
+        }
+    }
+
     func quickExit() {
         route = .decoy
     }
 
     func deleteDemoCase() {
+        TigerDataAdapter.deleteSnapshot(ownerID: state.user.id)
         BackboardAdapter.deleteAll()
         state = Fixture.fresh()
         restoredFromMemory = false
+        restoredFromTigerData = false
         session = nil
         pendingFacts = []
         route = .disclosure
@@ -178,5 +236,6 @@ final class AppStore: ObservableObject {
 
     func persist() {
         BackboardAdapter.save(state)
+        TigerDataAdapter.saveSnapshot(state, ownerID: state.user.id)
     }
 }

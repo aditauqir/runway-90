@@ -99,8 +99,11 @@ Runway90/
    (declared in project.yml). `TIGER_DATA_URL` in Secrets.plist is the full
    `postgres://` connection string. Hypertable already created on service
    `db-90`: `events(id text, case_id text, type text, timestamp timestamptz,
-   payload jsonb)` + `create_hypertable('events','timestamp')`. Insert path
-   verified live from Swift. Inspect with:
+   payload jsonb)` + `create_hypertable('events','timestamp')`. The app also
+   upserts a full synthetic `CaseState` into `case_snapshots`, keyed by the
+   Auth0 ID-token `sub` claim (stable demo IDs for demo login), and restores it
+   after survivor login on a new install. Insert/restore path is compile-
+   verified; inspect with:
    `psql "$TIGER_DATA_URL" -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"`
    (psql lives at /opt/homebrew/opt/libpq/bin).
 4. ~~Gemini live test~~ **DONE (2026-09-18)** — `gemini-2.0-flash` is retired;

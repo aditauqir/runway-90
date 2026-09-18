@@ -124,7 +124,8 @@ Types in `Models/Models.swift`, mirroring spec §5 exactly: `User`, `CaseRecord`
 - On launch: `BackboardAdapter.load()`; success sets
   `restoredFromMemory = true`, which drives the "Backboard memory /
   Demo memory fallback" chip on the home screen (this is the judge-visible
-  proof of Beat 1).
+  proof of Beat 1). After a survivor session starts, Tiger Data can restore a
+  full `CaseState` snapshot scoped to the session owner.
 - `deleteDemoCase()` removes the file, resets to `Fixture.fresh()`, routes to
   disclosure.
 - Fixture seed: Maya, day 6, runway 18, facts `fact-rent` ($1,150),
@@ -192,6 +193,13 @@ can be shown the memory table driving the copy.
     timestamp timestamptz NOT NULL, payload jsonb
   );
   SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
+
+  CREATE TABLE IF NOT EXISTS case_snapshots (
+    owner_id text PRIMARY KEY,
+    case_id text NOT NULL,
+    updated_at timestamptz NOT NULL,
+    payload jsonb NOT NULL
+  );
   ```
 - Insert path: prepared statement, `payload` serialized to a JSON string cast
   `::jsonb`, timestamp as `PostgresTimestampWithTimeZone(date:)`. Runs on
@@ -200,6 +208,10 @@ can be shown the memory table driving the copy.
 - Event types written: `fact_confirmed`, `account_marked_not_mine`,
   `fact_needs_review`, `assistance_request_created`,
   `assistance_request_approved`, `runway_recalculated`, `summary_shared`.
+- Snapshot path: every `persist()` upserts the complete synthetic `CaseState`
+  into `case_snapshots`; live Auth0 sessions use the ID-token `sub` claim as
+  `owner_id`, while demo roles use stable synthetic IDs. A new install loads
+  that snapshot after survivor login and shows a `Tiger Data restore` chip.
 - Judge-facing inspection query:
   ```sh
   /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
@@ -302,8 +314,8 @@ Liquid Glass implementation:
 2. **Auth0 login untested end-to-end** (needs a screen). Everything up to
    `webAuth().start()` is compile-verified only.
 3. **Backboard restore** is local-JSON-only; remote memory is write-path only.
-4. **TigerDataAdapter opens one connection per event** — acceptable at demo
-   scale, replace with a pooled connection if event volume grows.
+4. **TigerDataAdapter opens one connection per event/snapshot operation** —
+   acceptable at demo scale, replace with a pooled connection if volume grows.
 5. **PostgresClientKit** is minimally maintained upstream; it builds clean on
    Xcode 27/Swift 5.10 today. If it ever breaks, fallback plan is a tiny HTTP
    proxy (the adapter's `record(event:)` signature is transport-agnostic).

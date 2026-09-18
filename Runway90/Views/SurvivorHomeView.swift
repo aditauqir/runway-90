@@ -35,7 +35,11 @@ struct SurvivorHomeView: View {
                             .background(RW.raspberry, in: Capsule())
                             .foregroundStyle(RW.cloud)
                         Spacer()
-                        if store.restoredFromMemory {
+                        if store.restoredFromTigerData {
+                            Label("Tiger Data restore", systemImage: "cylinder.split.1x2")
+                                .font(.caption2)
+                                .foregroundStyle(RW.pink.opacity(0.9))
+                        } else if store.restoredFromMemory {
                             Label(BackboardAdapter.isLive ? "Backboard memory" : "Demo memory fallback",
                                   systemImage: "brain.head.profile")
                                 .font(.caption2)
@@ -101,6 +105,16 @@ struct SurvivorHomeView: View {
         .navigationTitle("Runway 90")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    store.logout()
+                } label: {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.title3)
+                }
+                .foregroundStyle(RW.cloud)
+                .accessibilityLabel("Log out")
+            }
             ToolbarItem(placement: .topBarTrailing) { QuickExitButton() }
         }
         .sheet(isPresented: $showCapture) {

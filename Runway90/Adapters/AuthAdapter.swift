@@ -27,6 +27,17 @@ struct AuthAdapter {
         var displayName: String
         var isDemo: Bool
         var mfaVerified: Bool
+        /// Auth0 `sub` for live sessions; stable demo IDs for local roles.
+        /// Tiger snapshot rows are scoped by this identifier.
+        var subject: String
+    }
+
+    enum AuthError: LocalizedError {
+        case missingSubject
+
+        var errorDescription: String? {
+            "Auth0 did not return a stable user identifier."
+        }
     }
 
     // MARK: - Demo fallback (always available)
@@ -35,7 +46,8 @@ struct AuthAdapter {
         Session(role: role,
                 displayName: role == .survivor ? "Maya" : "Demo Advocate",
                 isDemo: true,
-                mfaVerified: role == .survivor) // advocate must pass the demo-MFA sheet
+                mfaVerified: role == .survivor, // advocate must pass the demo-MFA sheet
+                subject: role == .survivor ? "demo-maya-001" : "demo-advocate-001")
     }
 
     // MARK: - Live Auth0
@@ -50,6 +62,9 @@ struct AuthAdapter {
             .start()
 
         let claims = decodeJWTPayload(credentials.idToken) ?? [:]
+        guard let subject = claims["sub"] as? String, !subject.isEmpty else {
+            throw AuthError.missingSubject
+        }
         let roles = (claims[rolesClaim] as? [String]) ?? []
         let role: Role = roles.contains("advocate") ? .advocate : .survivor
         let name = (claims["name"] as? String)
@@ -60,7 +75,8 @@ struct AuthAdapter {
         return Session(role: role,
                        displayName: role == .survivor ? "Maya" : name,
                        isDemo: false,
-                       mfaVerified: true) // tenant policy enforces MFA before we get here
+                       mfaVerified: true, // tenant policy enforces MFA before we get here
+                       subject: subject)
     }
 
     @MainActor

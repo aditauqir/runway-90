@@ -28,8 +28,7 @@ struct AdvocateView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Back to Maya") {
-                        store.session = AuthAdapter.demoLogin(role: .survivor)
-                        store.route = .survivor
+                        store.startSession(AuthAdapter.demoLogin(role: .survivor))
                     }
                     .tint(RW.mist)
                 }

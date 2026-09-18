@@ -109,7 +109,9 @@ struct RunwayView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .topBarTrailing) { QuickExitButton() } }
         .alert("Neutral summary shared", isPresented: $showShareConfirm) {
-            Button("Switch to advocate view") { store.route = .advocate; store.session = AuthAdapter.demoLogin(role: .advocate) }
+            Button("Switch to advocate view") {
+                store.startSession(AuthAdapter.demoLogin(role: .advocate))
+            }
             Button("Stay here", role: .cancel) {}
         } message: {
             Text("Only the summary you chose to share is visible to the advocate. Private notes, unconfirmed facts, and documents stay with you.")

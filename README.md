@@ -34,6 +34,7 @@
 - [What Runway 90 Does](#what-runway-90-does)
 - [The 5-Beat Demo Loop](#the-5-beat-demo-loop)
 - [Sponsor Architecture & Technical Reference](#sponsor-architecture--technical-reference)
+  - [UML Sequence: Auth0-Scoped Tiger Restore](#uml-sequence-auth0-scoped-tiger-restore)
   - [Google Gemini API (Vision & Structured Extraction)](#1-google-gemini-api-vision--structured-extraction)
   - [Backboard (Cross-Session Persistent Memory)](#2-backboard-cross-session-persistent-memory)
   - [Tiger Data / Timescale Cloud (Event-Sourced Runway)](#3-tiger-data--timescale-cloud-event-sourced-runway)
@@ -193,7 +194,44 @@ Runway 90 integrates four sponsors where each serves a load-bearing architectura
                                          Universal Login PKCE
                                          Custom URL scheme callback
                                          Roles claim: survivor vs advocate
-                                         Scoped, revocable data isolation
+                                        Scoped, revocable data isolation
+```
+
+### UML Sequence: Auth0-Scoped Tiger Restore
+
+This sequence shows the live persistence path used after a survivor signs in on
+a new device. The demo login uses a stable synthetic subject; live Auth0 uses
+the token's `sub` claim as the Tiger snapshot owner key.
+
+```mermaid
+sequenceDiagram
+    actor Survivor
+    participant Auth0
+    participant App as Runway 90 AppStore
+    participant Tiger as Tiger Cloud
+    participant Gemini
+    actor Advocate
+
+    Survivor->>Auth0: Universal Login (PKCE)
+    Auth0-->>App: ID token (sub + roles)
+    App->>Tiger: SELECT case_snapshots WHERE owner_id = sub
+    Tiger-->>App: CaseState JSONB (or no snapshot)
+    App->>App: Restore local case or seed synthetic fixture
+
+    Survivor->>App: Review synthetic letter
+    App->>Gemini: Extract structured facts
+    Gemini-->>App: Unconfirmed facts JSON
+    Survivor->>App: Mine / Not mine / Not sure
+    App->>Tiger: INSERT event + UPSERT case snapshot
+
+    Survivor->>App: Share neutral summary
+    App->>Tiger: INSERT summary_shared event
+    Advocate->>Auth0: Sign in as advocate
+    Auth0-->>App: Advocate role + MFA verified
+    App-->>Advocate: Shared summary only
+    Advocate->>App: Approve transportation request
+    App->>Tiger: INSERT approval + runway_recalculated events
+    App->>Tiger: UPSERT updated CaseState snapshot
 ```
 
 ### 1. Google Gemini API (Vision & Structured Extraction)
@@ -230,7 +268,7 @@ Runway 90 integrates four sponsors where each serves a load-bearing architectura
 - **Fallback:** Local atomic JSON persistence (`Documents/runway90_case_state.json`) with a `Demo memory fallback` badge.
 
 ### 3. Tiger Data / Timescale Cloud (Event-Sourced Runway)
-- **Role:** Financial runway is a continuous time-series aggregate, not a static number. Every confirmed fact, expense, and request is an immutable event.
+- **Role:** Financial runway is a continuous time-series aggregate, not a static number. Every confirmed fact, expense, and request is an immutable event, while the latest synthetic `CaseState` is stored as a recoverable JSONB snapshot.
 - **Service Details:** Tiger Cloud service `db-90`, database `tsdb`.
 - **Direct Wire Protocol:** Direct TLS connection from Swift to PostgreSQL via `PostgresClientKit` (SCRAM-SHA-256 authentication). **No middle-tier proxy required.**
 - **Database Hypertable Schema:**
@@ -245,6 +283,7 @@ Runway 90 integrates four sponsors where each serves a load-bearing architectura
   SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
   ```
 - **Event Types Emitted:** `fact_confirmed`, `account_marked_not_mine`, `fact_needs_review`, `assistance_request_created`, `assistance_request_approved`, `runway_recalculated`, `summary_shared`.
+- **Recovery Snapshot:** `case_snapshots` is keyed by `owner_id`; live Auth0 sessions use the ID token `sub` claim, and demo roles use stable synthetic IDs. A fresh install can load the snapshot after login.
 - **Fallback:** Local event log in `CaseState.timeline` with `Demo data source` badge.
 
 ### 4. Auth0 by Okta (Role Separation & Scoped Access)
@@ -254,6 +293,7 @@ Runway 90 integrates four sponsors where each serves a load-bearing architectura
   - `roles.contains("advocate")` -> `.advocate` (Advocate Dashboard).
   - Otherwise -> `.survivor` (Survivor Reclaim Workspace).
 - **Data Scoping:** The advocate view can **only** query explicitly shared aggregate summaries (`summaryShared == true`). Advocates have zero access to document photos, raw timelines, or unconfirmed facts.
+- **Tiger Link:** Auth0's stable `sub` claim scopes each survivor's Tiger snapshot; the app never uses an email address as the database owner key.
 - **MFA Enforcement:** Tenant-enforced multi-factor authentication for advocates. Live Auth0 sessions skip in-app MFA; demo mode provides a 6-digit simulation sheet.
 - **Fallback:** Labelled `Demo login` local role toggle.
 
@@ -431,8 +471,13 @@ xcodebuild -project Runway90.xcodeproj -scheme Runway90 \
 - **Inspecting Live Tiger Data Events:**
   If you have configured `TIGER_DATA_URL`, view live event ingestion from terminal:
   ```sh
+    /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
+      -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"
+  ```
+- **Inspecting Tiger snapshots:**
+  ```sh
   /opt/homebrew/opt/libpq/bin/psql "$TIGER_DATA_URL" \
-    -c "SELECT type, timestamp FROM events ORDER BY timestamp DESC LIMIT 10;"
+    -c "SELECT owner_id, case_id, updated_at FROM case_snapshots ORDER BY updated_at DESC;"
   ```
 - **Quick Exit in Simulator:**
   Trigger shake gesture in Simulator via **Device ▸ Shake** or tap the **Exit Shield Button** in the navigation bar.
@@ -507,6 +552,14 @@ CREATE TABLE events (
 
 -- Convert to Timescale continuous hypertable partitioned on timestamp
 SELECT create_hypertable('events', 'timestamp', if_not_exists => TRUE);
+
+-- Latest recoverable synthetic case state, scoped by Auth0 `sub`
+CREATE TABLE IF NOT EXISTS case_snapshots (
+  owner_id text PRIMARY KEY,
+  case_id text NOT NULL,
+  updated_at timestamptz NOT NULL,
+  payload jsonb NOT NULL
+);
 ```
 
 ---
