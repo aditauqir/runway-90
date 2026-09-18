@@ -87,6 +87,84 @@ extension View {
     }
 }
 
+// MARK: - Dedicated Liquid Glass Capsule & Circle Modifiers
+
+struct LiquidGlassButtonModifier: ViewModifier {
+    var tint: Color = .white.opacity(0.15)
+    var corner: CGFloat = 26
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(.regular.tint(tint.opacity(0.25)).interactive(), in: .rect(cornerRadius: corner))
+                .overlay(
+                    RoundedRectangle(cornerRadius: corner)
+                        .strokeBorder(Color.white.opacity(0.35), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.15), radius: 12, y: 6)
+        } else {
+            content
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: corner)
+                            .fill(.ultraThinMaterial)
+                        RoundedRectangle(cornerRadius: corner)
+                            .fill(tint.opacity(0.25))
+                    }
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: corner)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.55), Color.white.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.18), radius: 12, y: 6)
+        }
+    }
+}
+
+struct GlassCircleModifier: ViewModifier {
+    var tint: Color = .white.opacity(0.15)
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *) {
+            content
+                .glassEffect(.regular.tint(tint.opacity(0.2)).interactive(), in: .circle)
+                .overlay(Circle().strokeBorder(Color.white.opacity(0.4), lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.18), radius: 16, y: 8)
+        } else {
+            content
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay(
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.6), Color.white.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.18), radius: 16, y: 8)
+        }
+    }
+}
+
+extension View {
+    func liquidGlassButton(tint: Color = .white.opacity(0.15), corner: CGFloat = 26) -> some View {
+        modifier(LiquidGlassButtonModifier(tint: tint, corner: corner))
+    }
+    func glassCircle(tint: Color = .white.opacity(0.15)) -> some View {
+        modifier(GlassCircleModifier(tint: tint))
+    }
+}
+
 // MARK: - Screen background
 struct RWBackground: ViewModifier {
     func body(content: Content) -> some View {

@@ -13,10 +13,12 @@
 		38F232FCE01326FE1937D8EA /* DisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42F8515BE4E65C35A2CB1436 /* DisclosureView.swift */; };
 		3E6A42F6865BFA044AF8575E /* AuthAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614F666839FEE08CAC8FB698 /* AuthAdapter.swift */; };
 		51E2D16648431A8E36185C52 /* Runway90App.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4780487D7F98E485A2173AA /* Runway90App.swift */; };
+		52BD82438FB74363757C9782 /* login_bg.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 111607584698300C592AA2C4 /* login_bg.jpg */; };
 		557BDB64408EA306FC4B5F25 /* ReclaimView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2727E32D3E008E4BF839D8A5 /* ReclaimView.swift */; };
 		563EB7F8715724298BEC0933 /* GeminiAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29AB8CE9FC67D6A697C4ECB8 /* GeminiAdapter.swift */; };
 		627CE9089A3DC85AA9D09CE1 /* SurvivorHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */; };
 		630727A9AD5AD5EFA6FEA9EA /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = 3D5D005B541FB1E732F65BA9 /* Auth0 */; };
+		6CE49E28660B18D471B5B1B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 983C55BAC310ADBF8FD5C8DF /* Assets.xcassets */; };
 		8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */ = {isa = PBXBuildFile; fileRef = 94CC7D10685938D60AC3274C /* Auth0.plist */; };
 		9A16DDB46D9BE631872489CD /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE719B53DEEBF2AFD20F079A /* Secrets.swift */; };
 		9C2995F6FB04C8C2206482C3 /* RunwayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20886633F97D8372E36062B9 /* RunwayView.swift */; };
@@ -33,6 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		111607584698300C592AA2C4 /* login_bg.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = login_bg.jpg; sourceTree = "<group>"; };
 		20886633F97D8372E36062B9 /* RunwayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunwayView.swift; sourceTree = "<group>"; };
 		2727E32D3E008E4BF839D8A5 /* ReclaimView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReclaimView.swift; sourceTree = "<group>"; };
 		28F0223B432C1EA67561B9B9 /* BackboardAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackboardAdapter.swift; sourceTree = "<group>"; };
@@ -48,6 +51,7 @@
 		7ABF478A5FC5E88876D6408C /* SurvivorHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurvivorHomeView.swift; sourceTree = "<group>"; };
 		8D690F990841F6AE7363A8A1 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		94CC7D10685938D60AC3274C /* Auth0.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Auth0.plist; sourceTree = "<group>"; };
+		983C55BAC310ADBF8FD5C8DF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A5FA338DCD263BACDD254CFE /* AdvocateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvocateView.swift; sourceTree = "<group>"; };
 		D4780487D7F98E485A2173AA /* Runway90App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Runway90App.swift; sourceTree = "<group>"; };
 		D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Secrets.example.plist; sourceTree = "<group>"; };
@@ -74,7 +78,9 @@
 		06149C1841C8A092AE6AFBB0 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				983C55BAC310ADBF8FD5C8DF /* Assets.xcassets */,
 				94CC7D10685938D60AC3274C /* Auth0.plist */,
+				111607584698300C592AA2C4 /* login_bg.jpg */,
 				D6A11B82E3A9D903DF783D18 /* Secrets.example.plist */,
 				EE87782080672EF9DEC0FED6 /* Secrets.plist */,
 			);
@@ -239,9 +245,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6CE49E28660B18D471B5B1B8 /* Assets.xcassets in Resources */,
 				8152B5FFC71F067696FD00A7 /* Auth0.plist in Resources */,
 				A2895C09395B087D6E63CA77 /* Secrets.example.plist in Resources */,
 				C08B423395277E0695141BA9 /* Secrets.plist in Resources */,
+				52BD82438FB74363757C9782 /* login_bg.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

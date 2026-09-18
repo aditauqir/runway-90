@@ -1,80 +1,146 @@
 import SwiftUI
 
-/// Demo role entry — Maya (survivor) or Demo Advocate.
-/// Uses Auth0 when configured, otherwise a clearly labelled local demo login.
+/// Login & Role Entry screen with Apple Liquid Glass aesthetic over custom iridescent background.
 struct RoleEntryView: View {
     @EnvironmentObject var store: AppStore
     @State private var loginError: String?
     @State private var loggingIn = false
 
     var body: some View {
-        VStack(spacing: 24) {
-            HStack {
-                Spacer()
-                QuickExitButton()
-            }
-            .padding(.horizontal)
+        GeometryReader { proxy in
+            ZStack {
+                // MARK: - Background Image & Subtle Scrim
+                backgroundLayer
 
-            Spacer()
-
-            Text("Who is presenting?")
-                .font(.title2.weight(.bold))
-                .foregroundStyle(RW.cloud)
-
-            if !AuthAdapter.isLive {
-                Text("Demo login — Auth0 not configured. This is a local role switch, not production authentication.")
-                    .font(.caption)
-                    .foregroundStyle(RW.mist)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            VStack(spacing: 16) {
-                if AuthAdapter.isLive {
-                    Button {
-                        Task { await liveLogin() }
-                    } label: {
-                        roleRow(icon: "key.horizontal.fill",
-                                title: loggingIn ? "Signing in…" : "Log in with Auth0",
-                                subtitle: "Universal Login · role from your account")
+                // MARK: - Top Bar with Quick Exit
+                VStack {
+                    HStack {
+                        Spacer()
+                        QuickExitButton()
                     }
-                    .rwPrimaryButton()
-                    .disabled(loggingIn)
+                    .padding(.horizontal, 20)
+                    .padding(.top, proxy.safeAreaInsets.top > 0 ? 8 : 16)
+                    Spacer()
+                }
 
-                    if let loginError {
-                        Text(loginError)
-                            .font(.caption)
-                            .foregroundStyle(RW.pink)
-                            .multilineTextAlignment(.center)
+                // MARK: - Apple Flight Icon (exactly 30px above center mid)
+                flightIcon
+                    .offset(y: -30)
+
+                // MARK: - Bottom Controls
+                VStack {
+                    Spacer()
+
+                    VStack(spacing: 12) {
+                        if let loginError {
+                            Text(loginError)
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(RW.raspberry.opacity(0.85), in: Capsule())
+                                .multilineTextAlignment(.center)
+                        }
+
+                        // Button 1: Log in
+                        Button {
+                            if AuthAdapter.isLive {
+                                Task { await liveLogin() }
+                            } else {
+                                store.startSession(AuthAdapter.demoLogin(role: .survivor))
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                if loggingIn {
+                                    ProgressView()
+                                        .tint(.white)
+                                }
+                                Text(loggingIn ? "Signing in…" : "Log in")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundStyle(Color.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                        }
+                        .liquidGlassButton(tint: RW.raspberry, corner: 26)
+                        .disabled(loggingIn)
+
+                        // Button 2: Welcome back <user>
+                        Button {
+                            store.startSession(AuthAdapter.demoLogin(role: .survivor))
+                        } label: {
+                            Text("Welcome back, \(store.state.user.displayName)")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(Color.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                        }
+                        .liquidGlassButton(tint: Color.white.opacity(0.2), corner: 26)
+
+                        // Small Plain Text Link: "I'm a demo advocate"
+                        Button {
+                            store.startSession(AuthAdapter.demoLogin(role: .advocate))
+                        } label: {
+                            Text("I’m a demo advocate")
+                                .font(.footnote)
+                                .foregroundStyle(Color.white.opacity(0.85))
+                                .padding(.top, 4)
+                                .padding(.bottom, 2)
+                        }
+                        .buttonStyle(.plain)
+
+                        SyntheticBanner()
+                            .padding(.top, 2)
                     }
-
-                    Text("Or use the local demo roles (labelled Demo login):")
-                        .font(.caption2)
-                        .foregroundStyle(RW.mist.opacity(0.8))
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, proxy.safeAreaInsets.bottom > 0 ? 12 : 24)
                 }
-                Button {
-                    store.startSession(AuthAdapter.demoLogin(role: .survivor))
-                } label: {
-                    roleRow(icon: "person.fill", title: "Maya", subtitle: "Survivor · case day 6")
-                }
-                .rwPrimaryButton()
-
-                Button {
-                    store.startSession(AuthAdapter.demoLogin(role: .advocate))
-                } label: {
-                    roleRow(icon: "person.badge.shield.checkmark.fill",
-                            title: "Demo Advocate", subtitle: "Sees only what Maya shares")
-                }
-                .rwPrimaryButton(RW.pink)
             }
-            .padding(.horizontal, 24)
-
-            Spacer()
-            SyntheticBanner()
-                .padding(.bottom, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea()
         }
-        .rwScreen()
     }
+
+    // MARK: - Subviews
+
+    private var backgroundLayer: some View {
+        ZStack {
+            if let uiImg = UIImage(named: "login_bg") ?? (Bundle.main.path(forResource: "login_bg", ofType: "jpg").flatMap { UIImage(contentsOfFile: $0) }) {
+                Image(uiImage: uiImg)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                RW.gradient
+            }
+
+            // Subtle dark-to-translucent scrim to enhance liquid glass refraction and text legibility
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.22),
+                    Color.black.opacity(0.05),
+                    Color.black.opacity(0.48)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    private var flightIcon: some View {
+        ZStack {
+            Circle()
+                .frame(width: 80, height: 80)
+                .glassCircle(tint: Color.white.opacity(0.18))
+
+            Image(systemName: "airplane.departure")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(Color.white)
+        }
+    }
+
+    // MARK: - Actions
 
     @MainActor
     private func liveLogin() async {
@@ -87,19 +153,5 @@ struct RoleEntryView: View {
             loginError = "Auth0 login failed: \(error.localizedDescription)"
         }
         loggingIn = false
-    }
-
-    private func roleRow(icon: String, title: String, subtitle: String) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon).font(.title2)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(subtitle).font(.caption).opacity(0.85)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").font(.footnote)
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
     }
 }
