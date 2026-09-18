@@ -32,10 +32,13 @@ struct AuthAdapter {
         return true
     }
 
-    /// The app can only use the live Auth0/Tiger/Gemini path once the public
-    /// API audience and backend URL have been filled in. Until then, the
-    /// entry screen deliberately uses the labelled Maya demo flow.
-    static var hasLiveAPIConfiguration: Bool {
+    /// True when Auth0 Domain + ClientId are present — enough for Universal Login.
+    /// The backend (Tiger/Gemini/Backboard proxy) is optional; adapters fall back
+    /// to labelled demo paths when it is not deployed.
+    static var hasLiveAPIConfiguration: Bool { isLive }
+
+    /// True when the full backend proxy is also configured (audience + URL).
+    static var hasBackendConfiguration: Bool {
         guard isLive,
               let audience = apiAudience,
               let backendURL = backendURL,
@@ -82,13 +85,16 @@ struct AuthAdapter {
                        subject: role == .survivor ? account.subject : "demo-advocate-001")
     }
 
+    /// Convenience: pre-seeded demo subject for Isabel (matches Fixture.fresh)
+    static var defaultDemoSubject: String { "demo-isabel-001" }
+
     static var hasPreviousDemoLogin: Bool {
         UserDefaults.standard.bool(forKey: demoSessionKey)
     }
 
     static func demoCreateAccount(displayName: String, email: String) -> Session {
         let name = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeName = name.isEmpty ? "Maya" : name
+        let safeName = name.isEmpty ? "Isabel" : name
         let safeEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let account = DemoAccount(displayName: safeName,
                                   email: safeEmail.isEmpty ? "maya.demo@runway90.invalid" : safeEmail,
@@ -118,7 +124,11 @@ struct AuthAdapter {
 
     @MainActor
     static func loginLive(createAccount: Bool = false) async throws -> Session {
-        let webAuth = apiAudience.map { Auth0.webAuth().audience($0) } ?? Auth0.webAuth()
+        // Use the API audience when the backend is configured; otherwise basic OIDC.
+        var webAuth = Auth0.webAuth()
+        if let audience = apiAudience, !audience.contains("YOUR_") {
+            webAuth = webAuth.audience(audience)
+        }
         var request = webAuth.scope("openid profile email offline_access")
         if createAccount {
             request = request.parameters(["screen_hint": "signup"])
@@ -153,13 +163,14 @@ struct AuthAdapter {
         }
         let roles = (claims[rolesClaim] as? [String]) ?? []
         let role: Role = roles.contains("advocate") ? .advocate : .survivor
-        let name = (claims["name"] as? String)
+        let displayName = (claims["name"] as? String)
+            ?? (claims["given_name"] as? String)
             ?? (claims["nickname"] as? String)
             ?? (claims["email"] as? String)
-            ?? (role == .survivor ? "Survivor" : "Advocate")
+            ?? "Survivor"
 
         return Session(role: role,
-                       displayName: role == .survivor ? "Maya" : name,
+                       displayName: displayName,
                        isDemo: false,
                        mfaVerified: true, // tenant policy enforces MFA before we get here
                        accessToken: credentials.accessToken,
@@ -194,9 +205,9 @@ struct AuthAdapter {
               let displayName = values["displayName"] as? String,
               let email = values["email"] as? String,
               let subject = values["subject"] as? String else {
-            return DemoAccount(displayName: "Maya",
-                               email: "maya.demo@runway90.invalid",
-                               subject: "demo-maya-001")
+            return DemoAccount(displayName: "Isabel",
+                               email: "skmpe15@gmail.com",
+                               subject: "demo-isabel-001")
         }
         return DemoAccount(displayName: displayName, email: email, subject: subject)
     }

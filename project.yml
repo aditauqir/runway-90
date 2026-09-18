@@ -32,6 +32,9 @@ targets:
         NSCameraUsageDescription: "Used only to capture a demo document. No real documents are stored."
         NSPhotoLibraryUsageDescription: "Used only to pick the bundled synthetic demo letter."
         ITSAppUsesNonExemptEncryption: false
+        # Required for canOpenURL("weather://") to work — quick exit opens
+        # the real Weather app so a monitored phone looks completely natural.
+        LSApplicationQueriesSchemes: [weather]
         # Auth0 custom-scheme callback (matches the allowlisted
         # com.hackhers.runway90://skmpe.us.auth0.com/ios/... URLs)
         CFBundleURLTypes:

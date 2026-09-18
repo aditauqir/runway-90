@@ -33,6 +33,10 @@
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>weather</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Used only to capture a demo document. No real documents are stored.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

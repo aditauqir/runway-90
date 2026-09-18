@@ -70,18 +70,23 @@ struct SurvivorHomeView: View {
                         Text("Confirmed facts").font(.caption).foregroundStyle(RW.mist)
                         Text("\(store.confirmedFacts.count)")
                             .font(.title2.weight(.bold)).foregroundStyle(RW.cloud)
-                        Text("Experian frozen ✓").font(.caption2).foregroundStyle(RW.mist)
+                        Text("Experian + Equifax frozen").font(.caption2).foregroundStyle(RW.mist)
                     }
                 }
                 .glassCard(tint: RW.pink)
 
-                // Pending task
+                // Pending task — driven by memory
                 VStack(alignment: .leading, spacing: 8) {
                     Label("You have a reminder", systemImage: "bell.badge")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(RW.cloud)
-                    Text("TransUnion still needs review.")
-                        .font(.callout).foregroundStyle(RW.cloud.opacity(0.85))
+                    if let taskMemory = store.state.memory.first(where: { $0.key == "pending_task" }) {
+                        Text(taskMemory.value)
+                            .font(.callout).foregroundStyle(RW.cloud.opacity(0.85))
+                    } else {
+                        Text("No pending tasks.")
+                            .font(.callout).foregroundStyle(RW.cloud.opacity(0.85))
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .glassCard()

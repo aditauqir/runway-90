@@ -77,6 +77,16 @@ Runway90/
       `api/[...path].js`; Tiger snapshots are scoped by verified Auth0 `sub`.
 - [x] Persistence survives restart via a local offline cache plus authenticated
       Tiger snapshot restore for live survivor sessions.
+- [x] 5-page trauma-informed onboarding (welcome, safety ack, loop explainer,
+      personalization with sample doc export, ready screen). Scoped per subject.
+- [x] Quick exit opens the real Weather app (`weather://` URL scheme) on
+      physical devices; decoy screen is the simulator fallback.
+- [x] 3 synthetic documents (collection letter, bank statement, credit notice)
+      generated as images and saveable to Photos during onboarding.
+- [x] Isabel fixture: day 12, 28-day runway, 10 confirmed facts, 2 unrecognised
+      accounts, 1 under review, 3 documents scanned, 7 runway snapshots, 13
+      timeline events, 10 memory entries. Pre-populated in Tiger Data (27 events
+      + 8.6KB case snapshot) and Backboard (cross-thread recall verified).
 
 ## Status — TODO (pick up here)
 

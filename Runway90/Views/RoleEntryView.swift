@@ -251,8 +251,8 @@ private struct DemoAuthSheet: View {
     init(mode: DemoAuthMode, onComplete: @escaping (AuthAdapter.Session) -> Void) {
         self.mode = mode
         self.onComplete = onComplete
-        _displayName = State(initialValue: "Maya")
-        _email = State(initialValue: "maya.demo@runway90.invalid")
+        _displayName = State(initialValue: "Isabel")
+        _email = State(initialValue: "skmpe15@gmail.com")
     }
 
     var body: some View {

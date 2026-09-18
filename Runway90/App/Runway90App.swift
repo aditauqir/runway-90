@@ -23,6 +23,7 @@ struct RootView: View {
             switch store.route {
             case .disclosure: DisclosureView()
             case .roleEntry:  RoleEntryView()
+            case .onboarding: OnboardingView()
             case .survivor:   SurvivorRootView()
             case .advocate:   AdvocateView()
             case .decoy:      DecoyView()

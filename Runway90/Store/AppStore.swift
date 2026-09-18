@@ -4,6 +4,7 @@ import UIKit
 enum Route: Equatable {
     case disclosure
     case roleEntry
+    case onboarding
     case survivor
     case advocate
     case decoy
@@ -27,6 +28,13 @@ final class AppStore: ObservableObject {
     @Published var restoredFromMemory: Bool
     @Published var restoredFromTigerData = false
 
+    // Onboarding state — scoped per authenticated subject
+    @Published var onboardingPage: Int = 0
+    @Published var onboardingSafetyAcked = false
+    @Published var onboardingDisplayName = ""
+    @Published var onboardingShowDemoLetter = true
+    @Published var onboardingRememberSession = true
+
     init() {
         if let saved = BackboardAdapter.load() {
             state = saved
@@ -43,10 +51,19 @@ final class AppStore: ObservableObject {
     var memoryMessage: String {
         let mem = Dictionary(uniqueKeysWithValues: state.memory.map { ($0.key, $0.value) })
         var parts: [String] = ["Welcome back, \(state.user.displayName)."]
-        if mem["experian_status"] == "frozen" { parts.append("You froze Experian") }
-        if let last = mem["last_action"] { parts.append("and \(last).") }
-        if let task = mem["pending_task"] { parts.append(task.replacingOccurrences(of: "still needs review", with: "is still open") + ".") }
-        if mem["mentioned_letter"] == "true" { parts.append("Want to review the letter you mentioned?") }
+        // Credit bureau status
+        if let bureaus = mem["credit_bureaus_frozen"] {
+            parts.append("Credit bureaus: \(bureaus).")
+        } else if mem["experian_status"] == "frozen" {
+            parts.append("You froze Experian")
+            if mem["equifax_status"] == "frozen" { parts.append("and Equifax.") } else { parts.append(".") }
+        }
+        if let last = mem["last_action"] { parts.append("Last: \(last).") }
+        if let task = mem["pending_task"] { parts.append(task + ".") }
+        if let next = mem["next_action"], mem["mentioned_letter"] != "true" {
+            parts.append("Next step: \(next).")
+        }
+        if mem["mentioned_letter"] == "true" { parts.append("Want to review another document?") }
         return parts.joined(separator: " ")
     }
 
@@ -57,8 +74,21 @@ final class AppStore: ObservableObject {
         session = newSession
         previousSession = nil
         checkingPreviousSession = false
-        route = newSession.role == .advocate ? .advocate : .survivor
         restoredFromTigerData = false
+
+        if newSession.role == .advocate {
+            route = .advocate
+        } else if hasCompletedOnboarding(for: newSession.subject) {
+            route = .survivor
+        } else {
+            // Reset onboarding state for this new flow
+            onboardingPage = 0
+            onboardingSafetyAcked = false
+            onboardingDisplayName = newSession.displayName
+            onboardingShowDemoLetter = true
+            onboardingRememberSession = true
+            route = .onboarding
+        }
 
         // A live advocate must never inherit a survivor's local case from the
         // same device. The demo advocate intentionally keeps the current
@@ -226,6 +256,29 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    // MARK: - Onboarding
+
+    private static let onboardingPrefix = "runway90.onboarding.completed."
+
+    func hasCompletedOnboarding(for subject: String) -> Bool {
+        UserDefaults.standard.bool(forKey: Self.onboardingPrefix + subject)
+    }
+
+    func completeOnboarding() {
+        guard let subject = session?.subject else { return }
+        UserDefaults.standard.set(true, forKey: Self.onboardingPrefix + subject)
+
+        // Apply preferences
+        if !onboardingDisplayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            state.user.displayName = onboardingDisplayName
+        }
+        persist()
+    }
+
+    func clearOnboarding(for subject: String) {
+        UserDefaults.standard.removeObject(forKey: Self.onboardingPrefix + subject)
+    }
+
     // MARK: - Safety
 
     func logout() {
@@ -245,12 +298,22 @@ final class AppStore: ObservableObject {
     }
 
     func quickExit() {
-        route = .decoy
+        // Try to open the real Weather app first (looks completely natural on
+        // a monitored phone). Fall back to the in-app decoy if the URL scheme
+        // is unavailable (e.g. simulator without Weather installed).
+        if let weatherURL = URL(string: "weather://"),
+           UIApplication.shared.canOpenURL(weatherURL) {
+            UIApplication.shared.open(weatherURL)
+        } else {
+            route = .decoy
+        }
     }
 
     func deleteDemoCase() {
-        TigerDataAdapter.deleteSnapshot(ownerID: state.user.id, accessToken: remoteAccessToken)
+        let subject = state.user.id
+        TigerDataAdapter.deleteSnapshot(ownerID: subject, accessToken: remoteAccessToken)
         BackboardAdapter.deleteAll()
+        clearOnboarding(for: subject)
         state = Fixture.fresh()
         restoredFromMemory = false
         restoredFromTigerData = false
